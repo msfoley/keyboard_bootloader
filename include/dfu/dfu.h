@@ -23,11 +23,17 @@ enum dfu_request {
     DFU_REQUEST_GET_STATUS,
     DFU_REQUEST_CLEAR_STATUS,
     DFU_REQUEST_GET_STATE,
-    DFU_REQUEST_ABORT
+    DFU_REQUEST_ABORT,
+    DFU_REQUEST_LEN
+};
+
+enum dfu_status {
+    DFU_STATUS_LEN
 };
 
 struct dfu {
     enum dfu_state state;
+    enum dfu_status status;
 };
 
 int dfu_init();
