@@ -125,6 +125,7 @@ int boot_usb_init() {
     enum_register_descriptor(ENUM_DESC_STRING, string_descriptor_product, STRING_DESCRIPTOR_PRODUCT);
     enum_register_descriptor(ENUM_DESC_STRING, string_descriptor_serial, STRING_DESCRIPTOR_SERIAL_ID);
     enum_register_descriptor(ENUM_DESC_STRING, string_descriptor_dfu, STRING_DESCRIPTOR_DFU_INTERFACE);
+    boot_usb.string_descriptor_index = STRING_DESCRIPTOR_LEN;
 
     enum_register_callback(ENUM_CLASS_REQ, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_CLASS_REQ]); 
     enum_register_callback(ENUM_VENDOR_REQ, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_VENDOR_REQ]);
@@ -240,4 +241,24 @@ int boot_usb_enum_unregister_callback(struct boot_usb_enum_callback *cb) {
     }
 
     return 0;
+}
+
+int boot_usb_register_string_descriptor(uint8_t **string_descriptor, uint8_t len) {
+    int index_start = boot_usb.string_descriptor_index;
+
+    if (!string_descriptor) {
+        return -E_INVALID;
+    }
+
+    for (int i = 0; i < len; i++) {
+        if (!string_descriptor[i]) {
+            return -E_INVALID;
+        }
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        enum_register_descriptor(ENUM_DESC_STRING, string_descriptor[i], boot_usb.string_descriptor_index++);
+    }
+
+    return index_start;
 }

@@ -1,8 +1,6 @@
-/*#include <memory_layout.h>*/
-
 MEMORY {
-    BOOT (rx) : ORIGIN = 0x10000000, LENGTH = 0x00004000 /* 3MB flash */
-    APP (rx) : ORIGIN = 0x10004000, LENGTH = 0x002FC000 /* 3MB flash */
+    BOOT (rx) : ORIGIN = 0x10000000, LENGTH = 0x004000
+    APP (rx) : ORIGIN = 0x10004000, LENGTH = 0x2FC000
     SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00100000 /* 1MB SRAM */
 }
 

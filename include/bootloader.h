@@ -2,6 +2,12 @@
 #define BOOTLOADER_H
 
 #include <stdint.h>
+#include <device.h>
+
+#include <flash_layout.h>
+
+extern uint32_t __bootloader_info;
+extern uint32_t _text;
 
 #define BOOTLOADER_MAGIC 0x424F4F54
 
@@ -21,9 +27,12 @@ struct bootloader_info {
     uint16_t reserved;
     uint32_t start_address;
     uint32_t length;
+    uint32_t checksum;
 };
 
 extern struct bootloader_shared bootloader_shared;
 extern const struct bootloader_info bootloader_info;
+
+#define BOOTLOADER_INFO_OFFSET (&__bootloader_info - &_text)
 
 #endif

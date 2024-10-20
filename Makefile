@@ -47,12 +47,13 @@ SRCS := $(wildcard $(addsuffix /*.c, $(VPATH)))
 
 IPATH += .
 IPATH += include
+IPATH += include/$(TARGET_LC)
 
 SRC_DIR ?= src
 BLD_DIR ?= build
 
 ENTRY := flash_reset_handler
-LINKERFILE := src/linker.ld
+LINKERFILE := include/$(TARGET_LC)/linker.ld
 STARTUPFILE := src/startup.c
 
 LIB_BOARD := 0
