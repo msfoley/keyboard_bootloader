@@ -19,10 +19,14 @@ export CMSIS_ROOT
 
 COMPILER := GCC
 ifneq ($(strip $(DEBUG)),)
-MXC_OPTIMIZE_CFLAGS += -Og -g
+MXC_OPTIMIZE_CFLAGS += -O0
+PROJ_CFLAGS += -g -DDEBUG
 else
 MXC_OPTIMIZE_CFLAGS += -O2
 endif
+export MXC_OPTIMIZE_CFLAGS
+
+PATH := $(MAXIM_PATH)/Tools/GNUTools/10.3/bin:$(PATH)
 
 MFLOAT_ABI ?= softfp
 export MFLOAT_ABI
@@ -69,7 +73,11 @@ endif
 
 $(BLD_DIR)/$(PROJECT).dasm: $(BLD_DIR)/$(PROJECT).elf
 
-all: $(BLD_DIR)/$(PROJECT).bin $(BLD_DIR)/$(PROJECT).dasm
+$(BLD_DIR)/$(PROJECT).dfu: $(BLD_DIR)/$(PROJECT).bin
+	cp $< $@
+	dfu-suffix -v 0xDEAD -p 0xBEEF --add $@
+
+all: $(BLD_DIR)/$(PROJECT).bin $(BLD_DIR)/$(PROJECT).dasm $(BLD_DIR)/$(PROJECT).dfu
 	arm-none-eabi-size --format=berkeley $(BUILD_DIR)/$(PROJECT).elf
 
 clean:

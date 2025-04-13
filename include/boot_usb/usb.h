@@ -30,6 +30,7 @@ struct boot_usb {
 
 int boot_usb_init();
 int boot_usb_start();
+int boot_usb_stop();
 
 int boot_usb_register_callback(struct boot_usb_callback *cb);
 int boot_usb_unregister_callback(struct boot_usb_callback *cb);

@@ -13,7 +13,7 @@
 
 struct boot_usb boot_usb = {
     .callback_head = { NULL },
-    .callback_head = { NULL },
+    .enum_callback_head = { NULL },
 };
 
 void usb_handler(void) {
@@ -36,6 +36,12 @@ int startup_callback() {
 
 int shutdown_callback() {
     MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_USB);
+
+    return E_NO_ERROR;
+}
+
+int boot_usb_stop() {
+    MXC_USB_Shutdown();
 
     return E_NO_ERROR;
 }
@@ -83,7 +89,7 @@ int boot_usb_event_callback(maxusb_event_t event, void *data) {
 }
 
 int boot_usb_enum_callback(MXC_USB_SetupPkt *setup_packet, void *data) {
-    struct boot_usb_enum_callback *head = data;
+    struct boot_usb_enum_callback *head = *((struct boot_usb_enum_callback **) data);
     int ret = 0;
     int err;
 
@@ -127,13 +133,13 @@ int boot_usb_init() {
     enum_register_descriptor(ENUM_DESC_STRING, string_descriptor_dfu, STRING_DESCRIPTOR_DFU_INTERFACE);
     boot_usb.string_descriptor_index = STRING_DESCRIPTOR_LEN;
 
-    enum_register_callback(ENUM_CLASS_REQ, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_CLASS_REQ]); 
-    enum_register_callback(ENUM_VENDOR_REQ, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_VENDOR_REQ]);
-    enum_register_callback(ENUM_SETCONFIG, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_SETCONFIG]);
-    enum_register_callback(ENUM_SETINTERFACE, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_SETINTERFACE]);
-    enum_register_callback(ENUM_GETINTERFACE, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_GETINTERFACE]);
-    enum_register_callback(ENUM_SETFEATURE, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_SETFEATURE]);
-    enum_register_callback(ENUM_CLRFEATURE, boot_usb_enum_callback, boot_usb.enum_callback_head[ENUM_CLRFEATURE]);
+    enum_register_callback(ENUM_CLASS_REQ, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_CLASS_REQ]); 
+    enum_register_callback(ENUM_VENDOR_REQ, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_VENDOR_REQ]);
+    enum_register_callback(ENUM_SETCONFIG, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_SETCONFIG]);
+    enum_register_callback(ENUM_SETINTERFACE, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_SETINTERFACE]);
+    enum_register_callback(ENUM_GETINTERFACE, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_GETINTERFACE]);
+    enum_register_callback(ENUM_SETFEATURE, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_SETFEATURE]);
+    enum_register_callback(ENUM_CLRFEATURE, boot_usb_enum_callback, &boot_usb.enum_callback_head[ENUM_CLRFEATURE]);
 
     MXC_USB_EventEnable(MAXUSB_EVENT_NOVBUS, boot_usb_event_callback, NULL);
     MXC_USB_EventEnable(MAXUSB_EVENT_VBUS, boot_usb_event_callback, NULL);

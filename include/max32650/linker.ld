@@ -1,6 +1,6 @@
 MEMORY {
-    BOOT (rx) : ORIGIN = 0x10000000, LENGTH = 0x004000
-    APP (rx) : ORIGIN = 0x10004000, LENGTH = 0x2FC000
+    BOOT (rx) : ORIGIN = 0x10000000, LENGTH = 0x010000
+    APP (rx) : ORIGIN = 0x10004000, LENGTH = 0x2F0000
     SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00100000 /* 1MB SRAM */
 }
 
@@ -12,10 +12,9 @@ SECTIONS {
         __bootloader_info = ALIGN(., 4);
         KEEP(*(.bootloader_info))
         KEEP(*(.flash_isr))
-        *(.text*)
-        *(.rodata*)
+        _etext = .;
     } > BOOT
-    __flash_len = SIZEOF(.text);
+    __text_len = _etext - _text;
 
     .bootloader_shared (NOLOAD):
     {
@@ -25,12 +24,16 @@ SECTIONS {
     .data :
     {
         _data = ALIGN(., 4);
+        *(.text*)
+        *(.rodata*)
         *(.data*)           /*read-write initialized data: initialized global variable*/
         *(.flashprog*)      /* Flash program */
         _edata = ALIGN(., 4);
     } > SRAM AT>BOOT
     __data_len = SIZEOF(.data);
     __load_data = LOADADDR(.data);
+
+    __flash_len = __text_len + __data_len;
 
     .bss :
     {
@@ -58,10 +61,13 @@ SECTIONS {
     .heap (COPY):
     {
         . = ALIGN(4);
+        __heap_base = .;
         *(.heap*)
         __heap_limit = ABSOLUTE(__stack_limit);
     } > SRAM
 
+    __HeapBase = __heap_base;
+    __HeapLimit = __heap_limit;
     PROVIDE(__stack = __stack_top);
 
     /* Check if data + heap + stack exceeds RAM limit */

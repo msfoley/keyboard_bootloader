@@ -2,6 +2,7 @@
 #define DFU_DFU_H
 
 #include <usb.h>
+#include <dfu/download.h>
 
 enum dfu_state {
     DFU_STATE_APP_IDLE,
@@ -15,6 +16,7 @@ enum dfu_state {
     DFU_STATE_MANFIEST_WAIT_RESET,
     DFU_STATE_UPLOAD_IDLE,
     DFU_STATE_ERROR,
+    DFU_STATE_DETACH,
     DFU_STATE_LEN
 };
 
@@ -60,12 +62,15 @@ struct dfu {
     enum dfu_status status;
     enum dfu_vendor_error verr;
 
-    struct dfu_download *download;
+    struct dfu_download download;
 
     uint16_t desc_index_status;
 
     MXC_USB_Req_t request;
     uint8_t control_data[64];
+
+    int enumeration_complete;
+    int dirty;
 };
 
 struct dfu_status_response {
@@ -80,5 +85,6 @@ struct dfu_state_response {
 } __attribute__((packed));
 
 int dfu_init();
+int dfu_poll_state();
 
 #endif

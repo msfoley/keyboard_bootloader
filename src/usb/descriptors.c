@@ -23,7 +23,7 @@ const MXC_USB_device_descriptor_t device_descriptor = {
 };
 
 __attribute__((aligned(4)))
-const struct boot_usb_config_descriptor config_descriptor = {
+struct boot_usb_config_descriptor config_descriptor = {
     .config_descriptor = {
         .bLength = sizeof(config_descriptor.config_descriptor),
         .bDescriptorType = 0x02, // Config descriptor type

@@ -2,27 +2,36 @@
 #define DFU_DOWNLOAD_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <usb.h>
 
 #include <bootloader.h>
 
 struct dfu_download {
-    uint8_t **page;
+    uint8_t page[PAGE_SIZE];
+    uint8_t first_page[PAGE_SIZE];
+    uint8_t overflow[64];
 
-    int current_page;
+    size_t current_page;
     int page_waiting_to_flush;
 
     size_t count;
     size_t page_count;
+    size_t overflow_count;
     int app_update; // false if a bootloader update
+    int done;
 
     struct bootloader_info image_info;
 };
 
-int dfu_download_init(struct dfu_download *dfu_download);
-int dfu_download_check_done(struct dfu_download *state);
-int dfu_download_flush_page(struct dfu_download *state);
-void dfu_download_process(void *cbdata);
+struct dfu;
+
+int dfu_download_start(struct dfu *dfu);
+int dfu_download_stop(struct dfu *dfu);
+int dfu_download_check_done(struct dfu *dfu);
+void dfu_download(void *cbdata);
+void dfu_download_busy(struct dfu *dfu);
+void dfu_download_manifest(struct dfu *dfu);
 
 #endif

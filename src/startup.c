@@ -1,6 +1,10 @@
 #include <stdint.h>
 
 #include "nvic_table.h"
+#include "mxc_sys.h"
+#include "flc_regs.h"
+#include "icc_regs.h"
+#include "mxc_errors.h"
 
 #define ISR_VECTOR_SIZE_WORD 96
 
@@ -24,6 +28,9 @@
         while (1); \
     }
 
+extern uint32_t SystemCoreClock;
+extern uint8_t ChipRevision;
+
 extern uint32_t __stack_top;
 extern uint32_t __load_data;
 extern uint32_t _data;
@@ -39,6 +46,8 @@ WEAK_ISR(usage_fault_handler);
 
 extern int main();
 
+void init_system();
+
 __attribute__((naked, section(".flash_isr")))
 void flash_reset_handler() {
     uint32_t i;
@@ -50,6 +59,9 @@ void flash_reset_handler() {
            ldr r0, =__stack_top\n\
            msr msp, r0\n\
     ");
+
+    /* Workaround: Write to SCON register on power up to fix trim issue for SRAM */
+    MXC_GCR->scon = (MXC_GCR->scon & ~(MXC_F_GCR_SCON_OVR)) | (MXC_S_GCR_SCON_OVR_1V1);
 
     src = &__load_data;
     dst = &_data;
@@ -73,6 +85,7 @@ void flash_reset_handler() {
     dst[BusFault_IRQn + 16] = (uint32_t) bus_fault_handler;
     dst[UsageFault_IRQn + 16] = (uint32_t) usage_fault_handler;
 
+    init_system();
     main();
 
     while (1);
@@ -276,3 +289,65 @@ void (* __isr_vector[MXC_IRQ_COUNT])(void) = {
     dma15_handler,
     usbdma_handler
 };
+
+void init_system() {
+    ChipRevision = MXC_SYS_GetRev();
+    
+    /* MAX3265x ROM turns off interrupts, which is not the same as the reset state. */
+    __enable_irq();
+    
+    /* Enable FPU on Cortex-M4, which occupies coprocessor slots 10 & 11 */
+    /* Grant full access, per "Table B3-24 CPACR bit assignments". */
+    /* DDI0403D "ARMv7-M Architecture Reference Manual" */
+    SCB->CPACR |= SCB_CPACR_CP10_Msk | SCB_CPACR_CP11_Msk;
+    __DSB();
+    __ISB();
+
+    /* Change system clock source to the main high-speed clock */
+    MXC_SYS_Clock_Select(MXC_SYS_CLOCK_HIRC96);
+    SystemCoreClockUpdate();
+
+    // Flush and enable instruction cache
+    MXC_ICC->invalidate = 1;
+    while (!(MXC_ICC->cache_ctrl & MXC_F_ICC_CACHE_CTRL_READY)) {}
+    MXC_ICC->cache_ctrl |= MXC_F_ICC_CACHE_CTRL_ENABLE;
+    while (!(MXC_ICC->cache_ctrl & MXC_F_ICC_CACHE_CTRL_READY)) {}
+
+    /* Shutdown all peripheral clocks initially.  They will be re-enabled by each periph's init function. */
+    /* GPIO Clocks are left enabled */
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_USB);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TFT);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_DMA);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPI0);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPI1);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPI2);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_UART0);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_UART1);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_I2C0);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TPU);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TIMER0);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TIMER1);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TIMER2);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TIMER3);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TIMER4);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TIMER5);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_ADC);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_I2C1);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_PT);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPIXIPF);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPIXIPM);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_UART2);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_TRNG);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_FLC);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_HBC);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SCACHE);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SDMA);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SEMA);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SDHC);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_ICACHE);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_ICACHEXIP);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_OWIRE);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPI3);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_I2S);
+    MXC_SYS_ClockDisable(MXC_SYS_PERIPH_CLOCK_SPIXIPR);
+}
