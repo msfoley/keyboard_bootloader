@@ -21,9 +21,6 @@ int main() {
     boot_uart_init();
     boot_printf("\033[2J");
     boot_printf("Bootloader %02X.%02X\n", bootloader_info.version_major, bootloader_info.version_minor);
-    boot_printf("\n");
-    boot_printf("a\n");
-    boot_printf("b\n");
 
     if (bootloader_shared.magic != BOOTLOADER_MAGIC) {
         flash_control_init();

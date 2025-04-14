@@ -7,7 +7,6 @@
 #include <boot_usb/usb.h>
 #include <boot_usb/descriptors.h>
 #include <dfu/dfu.h>
-#include "strings.h"
 
 struct dfu dfu_state = { 0 };
 
@@ -97,7 +96,7 @@ int dfu_send_status(struct dfu *dfu, uint32_t poll_timeout) {
     status->poll_timeout[1] = (poll_timeout & 0x0000FF00) >> 8;
     status->poll_timeout[2] = (poll_timeout & 0x00FF0000) >> 16;
     status->state = dfu->state;
-    status->string = dfu->status + dfu->desc_index_status;
+    status->string = 0;
 
     return write_control_data(dfu_send_state_status_callback, dfu, dfu->control_data, sizeof(*status));
 }
@@ -137,8 +136,6 @@ int dfu_init() {
     if (ret) {
         return ret;
     }
-
-    dfu_state.desc_index_status = boot_usb_register_string_descriptor((uint8_t **) dfu_status_msg, DFU_STATUS_LEN);
 
     return ret;
 }
