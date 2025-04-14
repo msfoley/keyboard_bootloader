@@ -1,10 +1,10 @@
 #include <stdint.h>
 
-#include "nvic_table.h"
-#include "mxc_sys.h"
-#include "flc_regs.h"
-#include "icc_regs.h"
-#include "mxc_errors.h"
+#include <nvic_table.h>
+#include <mxc_sys.h>
+#include <flc_regs.h>
+#include <icc_regs.h>
+#include <mxc_errors.h>
 
 #define ISR_VECTOR_SIZE_WORD 96
 
@@ -48,12 +48,13 @@ extern int main();
 
 void init_system();
 
-__attribute__((naked, section(".flash_isr")))
+__attribute__((naked, noreturn, section(".flash_isr")))
 void flash_reset_handler() {
     uint32_t i;
-    uint32_t *dst;
-    uint32_t *src;
     uint32_t len;
+    // Volatile to try and force GCC to not optimize these loops to memcpy calls
+    volatile uint32_t *dst;
+    volatile uint32_t *src;
 
     asm volatile ("    \n\
            ldr r0, =__stack_top\n\
@@ -303,8 +304,15 @@ void init_system() {
     __DSB();
     __ISB();
 
+    if (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_EN)) {
+        MXC_GCR->clk_ctrl |= MXC_F_GCR_CLK_CTRL_HIRC96_EN;
+
+        while (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_RDY));
+
+        MXC_GCR->clk_ctrl = (MXC_GCR->clk_ctrl & ~MXC_F_GCR_CLK_CTRL_SYSOSC_SEL) | MXC_S_GCR_CLK_CTRL_SYSOSC_SEL_HIRC96;
+    }
+
     /* Change system clock source to the main high-speed clock */
-    MXC_SYS_Clock_Select(MXC_SYS_CLOCK_HIRC96);
     SystemCoreClockUpdate();
 
     // Flush and enable instruction cache

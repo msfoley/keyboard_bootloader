@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <usb.h>
 #include <enumerate.h>
@@ -181,7 +180,7 @@ int dfu_state_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
             return dfu_send_status(dfu, 0);
         case DFU_REQUEST_GET_STATE:
             return dfu_send_state(dfu);
-        case DFU_STATE_DETACH:
+        case DFU_REQUEST_DETACH:
             if (dfu->dirty) {
                 dfu->state = DFU_STATE_ERROR;
                 dfu->status = DFU_STATUS_ERROR_FIRMWARE;

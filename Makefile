@@ -22,7 +22,7 @@ ifneq ($(strip $(DEBUG)),)
 MXC_OPTIMIZE_CFLAGS += -O0
 PROJ_CFLAGS += -g -DDEBUG
 else
-MXC_OPTIMIZE_CFLAGS += -O2
+MXC_OPTIMIZE_CFLAGS += -Os
 endif
 export MXC_OPTIMIZE_CFLAGS
 
@@ -71,13 +71,17 @@ endif
 
 .PHONY: all clean libclean distclean
 
-$(BLD_DIR)/$(PROJECT).dasm: $(BLD_DIR)/$(PROJECT).elf
+$(BLD_DIR)/$(PROJECT).dasm: FORCE
+
+$(BLD_DIR)/$(PROJECT).bin: FORCE
+
+$(BLD_DIR)/$(PROJECT).dfu: FORCE
 
 $(BLD_DIR)/$(PROJECT).dfu: $(BLD_DIR)/$(PROJECT).bin
 	cp $< $@
 	dfu-suffix -v 0xDEAD -p 0xBEEF --add $@
 
-all: $(BLD_DIR)/$(PROJECT).bin $(BLD_DIR)/$(PROJECT).dasm $(BLD_DIR)/$(PROJECT).dfu
+all: $(BLD_DIR)/$(PROJECT).dasm $(BLD_DIR)/$(PROJECT).dfu
 	arm-none-eabi-size --format=berkeley $(BUILD_DIR)/$(PROJECT).elf
 
 clean:

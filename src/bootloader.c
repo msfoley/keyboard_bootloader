@@ -8,7 +8,7 @@
 
 extern uint32_t __flash_len;
 
-__attribute__((section(".flash_isr")))
+__attribute__((section(".bootloader_shared")))
 struct bootloader_shared bootloader_shared = {
     .magic = 0,
     .flags = 0

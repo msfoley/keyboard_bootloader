@@ -20,15 +20,13 @@ void usb_handler(void) {
     MXC_USB_EventHandler();
 }
 
+void us_delay(unsigned int us) {
+    uint32_t delay_cnt = (SystemCoreClock / 1000000) * us;
+
+    while (delay_cnt--);
+}
+
 int startup_callback() {
-    if (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_EN)) {
-        MXC_GCR->clk_ctrl |= MXC_F_GCR_CLK_CTRL_HIRC96_EN;
-
-        if (MXC_SYS_Clock_Timeout(MXC_F_GCR_CLK_CTRL_HIRC96_RDY) != E_NO_ERROR) {
-            return E_TIME_OUT;
-        }
-    }
-
     MXC_SYS_ClockEnable(MXC_SYS_PERIPH_CLOCK_USB);
 
     return E_NO_ERROR;
@@ -44,10 +42,6 @@ int boot_usb_stop() {
     MXC_USB_Shutdown();
 
     return E_NO_ERROR;
-}
-
-void us_delay(unsigned int us) {
-    MXC_Delay(us);
 }
 
 int boot_usb_event_callback(maxusb_event_t event, void *data) {

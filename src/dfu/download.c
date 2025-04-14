@@ -1,7 +1,5 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <usb.h>
 
@@ -99,7 +97,7 @@ void dfu_download(void *cbdata) {
     }
 
     if (state->page_waiting_to_flush) {
-        printf("Page %d complete - overflow %d\n", state->count / PAGE_SIZE, state->overflow_count);
+        boot_printf("Page %d complete - overflow %d\n", state->count / PAGE_SIZE, state->overflow_count);
     }
 
     MXC_USB_Ackstat(0);
