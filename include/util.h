@@ -10,4 +10,6 @@ void boot_printf(const char *fmt, ...);
 int boot_log2(uint32_t v);
 int boot_log10(uint32_t v);
 
+void us_delay(unsigned int us);
+
 #endif

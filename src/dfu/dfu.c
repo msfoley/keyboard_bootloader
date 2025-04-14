@@ -256,13 +256,12 @@ int dfu_state_download_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
                 if (!ret) {
                     dfu->state = DFU_STATE_MANIFEST_SYNC;
                     dfu->status = DFU_STATUS_OK;
-                    MXC_USB_Ackstat(0);
                 } else {
                     // Uh-oh
                     dfu->state = DFU_STATE_ERROR;
                     dfu->status = ret;
-                    MXC_USB_Stall(0);
                 }
+                MXC_USB_Ackstat(0);
             }
             break;
         case DFU_REQUEST_ABORT:

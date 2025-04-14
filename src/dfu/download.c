@@ -35,10 +35,11 @@ int dfu_download_stop(struct dfu *dfu) {
 
 int dfu_download_check_done(struct dfu *dfu) {
     struct dfu_download *state = &dfu->download;
+    uint32_t progress = state->count + state->page_count;
 
-    if ((state->count + state->page_count) < state->image_info.length) {
+    if (progress < state->image_info.length) {
         return DFU_STATUS_ERROR_NOT_DONE;
-    } else if (state->count < MINIMUM_SIZE) {
+    } else if (progress < MINIMUM_SIZE) {
         return DFU_STATUS_ERROR_TARGET;
     }
 
@@ -113,7 +114,6 @@ void dfu_download_busy(struct dfu *dfu) {
     if (ret) {
         dfu->state = DFU_STATE_ERROR;
         dfu->status = ret;
-        //MXC_USB_Stall(0);
 
         return;
     }
@@ -126,7 +126,6 @@ void dfu_download_busy(struct dfu *dfu) {
         if (ret) {
             dfu->state = DFU_STATE_ERROR;
             dfu->status = ret;
-            //MXC_USB_Stall(0);
 
             return;
         }
@@ -147,6 +146,21 @@ void dfu_download_manifest(struct dfu *dfu) {
     uint32_t address;
     int ret;
 
+    if (state->count == 0) {
+        memcpy(state->first_page, state->page, state->page_count);
+        memset(state->first_page + state->page_count, 0xFF, PAGE_SIZE - state->page_count);
+        state->page_count = 0;
+    
+        dfu->dirty = 1;
+        ret = flash_control_erase_page(state->image_info.start_address);
+        if (ret) {
+            dfu->state = DFU_STATE_ERROR;
+            dfu->status = ret;
+
+            return;
+        }
+    }
+
     if (state->page_count) {
         // Flush an in progress page
         address = state->image_info.start_address + state->count;
@@ -157,7 +171,6 @@ void dfu_download_manifest(struct dfu *dfu) {
         if (ret) {
             dfu->state = DFU_STATE_ERROR;
             dfu->status = ret;
-            //MXC_USB_Stall(0);
 
             return;
         }
@@ -166,7 +179,6 @@ void dfu_download_manifest(struct dfu *dfu) {
         if (ret) {
             dfu->state = DFU_STATE_ERROR;
             dfu->status = ret;
-            //MXC_USB_Stall(0);
 
             return;
         }

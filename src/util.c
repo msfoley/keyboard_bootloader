@@ -137,12 +137,10 @@ int boot_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
 
         for (i = int_len; i >= 0; i--) {
             uint32_t v = (val >> (4 * i)) & 0x0F;
-            char c;
+            char c = v + '0';
 
-            if (v < 10) {
-                c = '0' + v;
-            } else {
-                c += 'A' + v - 10;
+            if (v >= 10) {
+                c += ('A' - '0') - 10;
             }
             *(int_ptr++) = c;
         }
@@ -180,4 +178,10 @@ void boot_printf(const char *fmt, ...) {
         }
         MXC_UART_WriteCharacter(MXC_UART_GET_UART(UART_NUMBER), *(buf++));
     }
+}
+
+void us_delay(unsigned int us) {
+    uint32_t delay_cnt = (SystemCoreClock / 1000000) * us;
+
+    while (delay_cnt--);
 }

@@ -35,6 +35,8 @@ int main() {
 
         boot_usb_stop();
 
+        us_delay(500);
+
         jump(BOOTLOADER_START);
     }
 

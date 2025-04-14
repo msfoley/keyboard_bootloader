@@ -31,11 +31,10 @@ void jump_asm(uint32_t pc, uint32_t sp) {
 
 __attribute__((noreturn))
 void jump(uint32_t address) {
-    MXC_GCR->pclk_dis0 = 0xFFFFFFFF;
-    MXC_GCR->pclk_dis1 = 0xFFFFFFFF;
+    __disable_irq();
 
     NVIC->ICER[0] = 0xFFFFFFFF;
-    NVIC->ICER[1] = 0xFFFFFFFF;
+    NVIC->ICER[0] = 0xFFFFFFFF;
     NVIC->ICER[2] = 0xFFFFFFFF;
     NVIC->ICER[3] = 0xFFFFFFFF;
     NVIC->ICER[4] = 0xFFFFFFFF;
@@ -52,13 +51,15 @@ void jump(uint32_t address) {
     NVIC->ICPR[6] = 0xFFFFFFFF;
     NVIC->ICPR[7] = 0xFFFFFFFF;
 
+    MXC_GCR->rst0 |= MXC_F_GCR_RST0_PERIPH | MXC_F_GCR_RST0_SOFT;
+
     SysTick->CTRL = 0;
     SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
     SCB->ICSR |= SCB_ICSR_PENDSVCLR_Msk;
 
     SCB->VTOR = address;
 
-    jump_asm(((uint32_t *) address)[0], ((uint32_t *) address)[1]);
+    jump_asm(((uint32_t *) address)[1], ((uint32_t *) address)[0]);
 
     while (1);
 }

@@ -1,13 +1,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "usb.h"
-#include "usb_event.h"
-#include "enumerate.h"
-#include "mxc_delay.h"
-#include "gcr_regs.h"
-#include "mxc_sys.h"
+#include <usb.h>
+#include <usb_event.h>
+#include <enumerate.h>
+#include <mxc_delay.h>
+#include <gcr_regs.h>
+#include <mxc_sys.h>
 
+#include <util.h>
 #include <boot_usb/usb.h>
 #include <boot_usb/descriptors.h>
 
@@ -18,12 +19,6 @@ struct boot_usb boot_usb = {
 
 void usb_handler(void) {
     MXC_USB_EventHandler();
-}
-
-void us_delay(unsigned int us) {
-    uint32_t delay_cnt = (SystemCoreClock / 1000000) * us;
-
-    while (delay_cnt--);
 }
 
 int startup_callback() {
@@ -39,6 +34,7 @@ int shutdown_callback() {
 }
 
 int boot_usb_stop() {
+    MXC_USB_Disconnect();
     MXC_USB_Shutdown();
 
     return E_NO_ERROR;
