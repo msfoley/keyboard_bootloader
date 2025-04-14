@@ -74,11 +74,11 @@ void dfu_download(void *cbdata) {
     int ret;
     struct dfu *dfu = (struct dfu *) cbdata;
     struct dfu_download *state = &dfu->download;
-    MXC_USB_Req_t *req = &dfu->request;
+    struct usb_request *req = &dfu->request;
     uint32_t start_count = state->page_count;
 
-    count = req->actlen > (PAGE_SIZE - state->page_count) ? PAGE_SIZE - state->page_count : req->actlen;
-    state->overflow_count = req->actlen - count;
+    count = req->len > (PAGE_SIZE - state->page_count) ? PAGE_SIZE - state->page_count : req->len;
+    state->overflow_count = req->len - count;
 
     memcpy(state->page + state->page_count, req->data, count);
     memcpy(state->overflow, req->data + count, state->overflow_count);
@@ -92,7 +92,7 @@ void dfu_download(void *cbdata) {
             dfu->state = DFU_STATE_ERROR;
             dfu->status = ret;
 
-            MXC_USB_Ackstat(0);
+            usb_util_ack(0);
             return;
         }
     }
@@ -101,7 +101,7 @@ void dfu_download(void *cbdata) {
         boot_printf("Page %d complete - overflow %d\n", state->count / PAGE_SIZE, state->overflow_count);
     }
 
-    MXC_USB_Ackstat(0);
+    usb_util_ack(0);
 }
 
 void dfu_download_busy(struct dfu *dfu) {

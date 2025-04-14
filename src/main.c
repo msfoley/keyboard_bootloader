@@ -1,13 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <mxc_device.h>
-#include <mxc_sys.h>
-#include <mxc_delay.h>
-#include <nvic_table.h>
-#include <uart.h>
-#include <tmr.h>
-
 #include <dfu/dfu.h>
 #include <boot_usb/usb.h>
 #include <bootloader.h>
@@ -18,24 +11,24 @@
 int main() {
     int ret;
 
-    boot_uart_init();
-    boot_printf("\033[2J");
-    boot_printf("Bootloader %02X.%02X\n", bootloader_info.version_major, bootloader_info.version_minor);
+    util_uart_init();
+    util_printf("\033[2J");
+    util_printf("Bootloader %02X.%02X\n", bootloader_info.version_major, bootloader_info.version_minor);
 
     if (bootloader_shared.magic != BOOTLOADER_MAGIC) {
         flash_control_init();
-        boot_usb_init();
+        usb_init();
         dfu_init();
 
-        boot_usb_start();
+        usb_start();
 
         do {
             ret = dfu_poll_state();
         } while (!ret);
 
-        boot_usb_stop();
+        util_us_delay(500);
 
-        us_delay(500);
+        usb_stop();
 
         jump(BOOTLOADER_START);
     }

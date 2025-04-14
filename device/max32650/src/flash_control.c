@@ -20,7 +20,7 @@ int flash_control_init() {
 int flash_control_erase_page(uint32_t address) {
     int ret;
 
-    boot_printf("Erasing 0x%08X\n", address);
+    util_printf("Erasing 0x%08X\n", address);
 
     address = address & ~(PAGE_SIZE - 1);
 
@@ -34,7 +34,7 @@ int flash_control_erase_page(uint32_t address) {
         uint32_t read_value = *((uint32_t *) (address + i));
 
         if (written_value != read_value) {
-            boot_printf("Erase check failed at 0x%08X: 0x%08X != 0x%08X\n", address + i, written_value, read_value);
+            util_printf("Erase check failed at 0x%08X: 0x%08X != 0x%08X\n", address + i, written_value, read_value);
             return DFU_STATUS_ERROR_CHECK_ERASED;
         }
     }
@@ -45,7 +45,7 @@ int flash_control_erase_page(uint32_t address) {
 int flash_control_program_page(uint32_t address, uint8_t *page) {
     int ret;
 
-    boot_printf("Programming 0x%08X\n", address);
+    util_printf("Programming 0x%08X\n", address);
     address = address & ~(PAGE_SIZE - 1);
 
     for (uint32_t i = 0; i < PAGE_SIZE; i += 16) {
@@ -60,7 +60,7 @@ int flash_control_program_page(uint32_t address, uint8_t *page) {
         uint32_t read_value = *((uint32_t *) (address + i));
 
         if (written_value != read_value) {
-            boot_printf("Program check failed at 0x%08X: 0x%08X != 0x%08X\n", address + i, written_value, read_value);
+            util_printf("Program check failed at 0x%08X: 0x%08X != 0x%08X\n", address + i, written_value, read_value);
             return DFU_STATUS_ERROR_VERIFY;
         }
     }

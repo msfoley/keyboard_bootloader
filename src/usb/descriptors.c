@@ -1,11 +1,10 @@
 #include <stdint.h>
-#include "usb.h"
 
 #include <boot_usb/descriptors.h>
 #include <config.h>
 
 __attribute__((aligned(4)))
-const MXC_USB_device_descriptor_t device_descriptor = {
+struct usb_device_descriptor usb_device_descriptor = {
     .bLength = sizeof(device_descriptor),
     .bDescriptorType = 0x01, // Device descriptor
     .bcdUSB = 0x0200,
@@ -23,8 +22,8 @@ const MXC_USB_device_descriptor_t device_descriptor = {
 };
 
 __attribute__((aligned(4)))
-struct boot_usb_config_descriptor config_descriptor = {
-    .config_descriptor = {
+struct usb_product_config_descriptor usb_product_config_descriptor = {
+    .config = {
         .bLength = sizeof(config_descriptor.config_descriptor),
         .bDescriptorType = 0x02, // Config descriptor type
         .wTotalLength = sizeof(config_descriptor),
@@ -34,7 +33,7 @@ struct boot_usb_config_descriptor config_descriptor = {
         .bmAttributes = 0x80, // Bus powered
         .bMaxPower = 0xFA // 500 mA (2 mA / bit)
     },
-    .interface_descriptor = {
+    .dfu_interface = {
         .bLength = sizeof(config_descriptor.interface_descriptor),
         .bDescriptorType = 0x04, // Interface descriptor type
         .bInterfaceNumber = 0x00,
@@ -45,7 +44,7 @@ struct boot_usb_config_descriptor config_descriptor = {
         .bInterfaceProtocol = 0x02,
         .iInterface = STRING_DESCRIPTOR_DFU_INTERFACE
     },
-    .dfu_functional_descriptor = {
+    .dfu_functional = {
         .bLength = sizeof(config_descriptor.dfu_functional_descriptor),
         .bDescriptorType = 0x21,
         .bmAttributes = 0x0F,
@@ -111,3 +110,21 @@ const uint8_t string_descriptor_dfu[] = {
     'e', 0,
     'r', 0
 };
+
+struct usb_string_descriptor usb_string_descriptors[USB_STRING_DESCRIPTOR_LEN] = {
+    [USB_STRING_DESCRIPTOR_LANGUAGE_ID] = {
+        .data = string_descriptor_language,
+    },
+    [USB_STRING_DESCRIPTOR_MANUFACTURER] = {
+        .data = string_descriptor_manufacturer,
+    },
+    [USB_STRING_DESCRIPTOR_PRODUCT] = {
+        .data = string_descriptor_product,
+    },
+    [USB_STRING_DESCRIPTOR_SERIAL_ID] = {
+        .data = string_descriptor_serial,
+    },
+    [USB_STRING_DESCRIPTOR_DFU_INTERFACE] = {
+        .data = string_descriptor_dfu,
+    },
+}

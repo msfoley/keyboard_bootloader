@@ -3,12 +3,9 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include <uart.h>
-#include <device.h>
-
 char printf_buf[256];
 
-void boot_uart_init() {
+void util_uart_init() {
     MXC_UART_Init(MXC_UART_GET_UART(UART_NUMBER), 115200);
 }
 
@@ -18,7 +15,7 @@ static const uint8_t MultiplyDeBruijnBitPosition[32] =
   8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
 };
 
-int boot_log2(uint32_t v) {
+int util_log2(uint32_t v) {
     v |= v >> 1; // first round down to one less than a power of 2 
     v |= v >> 2;
     v |= v >> 4;
@@ -28,7 +25,7 @@ int boot_log2(uint32_t v) {
     return MultiplyDeBruijnBitPosition[(uint32_t)(v * 0x07C4ACDDU) >> 27];
 }
 
-size_t boot_strlen(char *buf) {
+size_t util_strlen(char *buf) {
     size_t count = 0;
 
     while (buf[count++] != '\0');
@@ -36,7 +33,7 @@ size_t boot_strlen(char *buf) {
     return count - 1;
 }
 
-int boot_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
+int util_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
     const char *fmt_ptr = fmt;
     char *buf_ptr = buf;
     int i;
@@ -84,7 +81,7 @@ int boot_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
             char *s = va_arg(args, char *);
 
             fmt_ptr++;
-            slen = boot_strlen(s);
+            slen = util_strlen(s);
 
             if ((size + slen) >= (len - 1)) {
                 break;
@@ -120,7 +117,7 @@ int boot_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
         }
 
         if (val != 0) {
-            int_len = boot_log2(val) / 4;
+            int_len = util_log2(val) / 4;
         } else {
             int_len = 0;
         }
@@ -146,7 +143,7 @@ int boot_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
         }
         *int_ptr = '\0';
 
-        slen = boot_strlen(int_buf);
+        slen = util_strlen(int_buf);
         if ((size + slen) >= (len - 1)) {
             break;
         }
@@ -164,24 +161,8 @@ int boot_vsnprintf(char *buf, size_t len, const char *fmt, va_list args_in) {
     return size;
 }
 
-void boot_printf(const char *fmt, ...) {
-    va_list args;
-
-    va_start(args, fmt);
-    boot_vsnprintf((char *) printf_buf, 256, fmt, args);
-    va_end(args);
-
-    char *buf = printf_buf;
-    while (*buf != '\0') {
-        if (*buf == '\n') {
-            MXC_UART_WriteCharacter(MXC_UART_GET_UART(UART_NUMBER), '\r');
-        }
-        MXC_UART_WriteCharacter(MXC_UART_GET_UART(UART_NUMBER), *(buf++));
-    }
-}
-
-void us_delay(unsigned int us) {
-    uint32_t delay_cnt = (SystemCoreClock / 1000000) * us;
+void util_us_delay(unsigned int us) {
+    uint32_t delay_cnt = (util_get_core_freq() / 1000000) * us;
 
     while (delay_cnt--);
 }

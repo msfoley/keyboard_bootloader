@@ -1,33 +1,31 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <usb.h>
-#include <enumerate.h>
-
-#include <boot_usb/usb.h>
-#include <boot_usb/descriptors.h>
+#include <usb/usb.h>
+#include <usb/usb_util.h>
+#include <usb/descriptors.h>
 #include <dfu/dfu.h>
 
 struct dfu dfu_state = { 0 };
 
-int dfu_state_machine(MXC_USB_SetupPkt *req, void *data);
-int dfu_set_config(MXC_USB_SetupPkt *req, void *data);
-int dfu_set_interface(MXC_USB_SetupPkt *req, void *data);
+int dfu_state_machine(struct usb_setup_packet *req, void *data);
+int dfu_set_config(struct usb_setup_packet *req, void *data);
+int dfu_set_interface(struct usb_setup_packet *req, void *data);
 
 struct boot_usb_enum_callback dfu_class_req_callback = {
-    .event = ENUM_CLASS_REQ,
+    .request = USB_ENUM_REQUEST_CLASS_REQ,
     .callback = dfu_state_machine,
     .data = &dfu_state
 };
 
 struct boot_usb_enum_callback dfu_set_config_callback = {
-    .event = ENUM_SETCONFIG,
+    .request = USB_ENUM_REQUEST_SET_CONFIG,
     .callback = dfu_set_config,
     .data = &dfu_state
 };
 
 struct boot_usb_enum_callback dfu_set_interface_callback = {
-    .event = ENUM_SETINTERFACE,
+    .request = USB_ENUM_REQUEST_SET_INTERFACE,
     .callback = dfu_set_interface,
     .data = &dfu_state
 };
@@ -39,14 +37,14 @@ int read_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, 
 
     memset(&dfu->request, 0, sizeof(dfu->request));
 
-    dfu->request.ep = 0;
+    dfu->request.endpoint = 0;
     dfu->request.data = data;
-    dfu->request.reqlen = len;
+    dfu->request.len = len;
     dfu->request.callback = callback;
-    dfu->request.cbdata = dfu;
-    dfu->request.type = MAXUSB_TYPE_PKT;
+    dfu->request.data = dfu;
+    dfu->request.type = USB_REQUEST_PACKET;
 
-    return MXC_USB_ReadEndpoint(&dfu->request);
+    return usb_util_read_endpoint(&dfu->request);
 }
 
 int write_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len) {
@@ -56,25 +54,25 @@ int write_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data,
 
     memset(&dfu->request, 0, sizeof(dfu->request));
 
-    dfu->request.ep = 0;
+    dfu->request.endpoint = 0;
     dfu->request.data = data;
-    dfu->request.reqlen = len;
+    dfu->request.len = len;
     dfu->request.callback = callback;
-    dfu->request.cbdata = dfu;
-    dfu->request.type = MAXUSB_TYPE_TRANS;
+    dfu->request.data = dfu;
+    dfu->request.type = USB_REQUEST_TRANSFER;
 
-    return MXC_USB_WriteEndpoint(&dfu->request);
+    return usb_util_write_endpoint(&dfu->request);
 }
 
 void dfu_send_state_status_callback(void *data) {
     struct dfu *dfu = data;
 
-    if (dfu->request.error_code) {
+    if (dfu->request.status) {
         dfu->state = DFU_STATE_ERROR;
         dfu->status = DFU_STATUS_ERROR_UNKNOWN;
-        MXC_USB_Stall(0);
+        usb_util_stall(0);
     } else {
-        MXC_USB_Ackstat(0);
+        usb_util_ack(0);
     }
 }
 
@@ -140,7 +138,7 @@ int dfu_init() {
     return ret;
 }
 
-int dfu_state_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_idle(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = E_NO_ERROR;
 
     switch (req->bRequest) {
@@ -155,7 +153,7 @@ int dfu_state_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
             } else {
                 dfu->state = DFU_STATE_ERROR;
                 dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-                MXC_USB_Stall(0);
+                usb_util_stall(0);
             }
             break;
         case DFU_REQUEST_UPLOAD:
@@ -163,15 +161,15 @@ int dfu_state_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
                 // Handle outgoing data
                 dfu->state = DFU_STATE_UPLOAD_IDLE;
                 dfu->status = DFU_STATUS_OK;
-                MXC_USB_Ackstat(0);
+                usb_util_ack(0);
             } else {
                 dfu->state = DFU_STATE_ERROR;
                 dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-                MXC_USB_Stall(0);
+                usb_util_stall(0);
             }
             break;
         case DFU_REQUEST_ABORT:
-            MXC_USB_Ackstat(0);
+            usb_util_ack(0);
             break;
         case DFU_REQUEST_GET_STATUS:
             return dfu_send_status(dfu, 0);
@@ -181,24 +179,24 @@ int dfu_state_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
             if (dfu->dirty) {
                 dfu->state = DFU_STATE_ERROR;
                 dfu->status = DFU_STATUS_ERROR_FIRMWARE;
-                MXC_USB_Stall(0);
+                usb_util_stall(0);
             } else {
                 dfu->state = DFU_STATE_DETACH;
                 dfu->status = DFU_STATUS_OK;
-                MXC_USB_Ackstat(0);
+                usb_util_ack(0);
             }
             break;
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_download_sync(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_download_sync(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
@@ -218,28 +216,28 @@ int dfu_state_download_sync(MXC_USB_SetupPkt *req, struct dfu *dfu) {
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_download_busy(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_download_busy(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_download_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_download_idle(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
@@ -261,13 +259,13 @@ int dfu_state_download_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
                     dfu->state = DFU_STATE_ERROR;
                     dfu->status = ret;
                 }
-                MXC_USB_Ackstat(0);
+                usb_util_ack(0);
             }
             break;
         case DFU_REQUEST_ABORT:
             dfu->state = DFU_STATE_IDLE;
             dfu->status = DFU_STATUS_OK;
-            MXC_USB_Ackstat(0);
+            usb_util_ack(0);
             break;
         case DFU_REQUEST_GET_STATUS:
             return dfu_send_status(dfu, 0);
@@ -276,14 +274,14 @@ int dfu_state_download_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_manifest_sync(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_manifest_sync(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
@@ -303,28 +301,28 @@ int dfu_state_manifest_sync(MXC_USB_SetupPkt *req, struct dfu *dfu) {
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_manifest(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_manifest(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_upload_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_upload_idle(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
@@ -337,13 +335,13 @@ int dfu_state_upload_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
                 }
             }
 
-            MXC_USB_Ackstat(0);
+            usb_util_ack(0);
             break;
         case DFU_REQUEST_ABORT:
             dfu->state = DFU_STATE_IDLE;
             dfu->status = DFU_STATUS_OK;
 
-            MXC_USB_Ackstat(0);
+            usb_util_ack(0);
             break;
         case DFU_REQUEST_GET_STATUS:
             return dfu_send_status(dfu, 0);
@@ -352,14 +350,14 @@ int dfu_state_upload_idle(MXC_USB_SetupPkt *req, struct dfu *dfu) {
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_error(MXC_USB_SetupPkt *req, struct dfu *dfu) {
+int dfu_state_error(struct usb_setup_packet *req, struct dfu *dfu) {
     int ret = 0;
 
     switch (req->bRequest) {
@@ -371,19 +369,19 @@ int dfu_state_error(MXC_USB_SetupPkt *req, struct dfu *dfu) {
             dfu->status = DFU_STATUS_OK;
             dfu->state = DFU_STATE_IDLE;
 
-            MXC_USB_Ackstat(0);
+            usb_util_ack(0);
             break;
         default:
             dfu->state = DFU_STATE_ERROR;
             dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return ret;
 }
 
-int dfu_state_machine(MXC_USB_SetupPkt *req, void *data) {
+int dfu_state_machine(struct usb_setup_packet *req, void *data) {
     struct dfu *dfu = data;
 
     switch (dfu->state) {
@@ -413,17 +411,17 @@ int dfu_state_machine(MXC_USB_SetupPkt *req, void *data) {
             break;
         case DFU_STATE_MANFIEST_WAIT_RESET:
         default:
-            MXC_USB_Stall(0);
+            usb_util_stall(0);
             break;
     }
 
     return 2;
 } 
 
-int dfu_set_config(MXC_USB_SetupPkt *req, void *data) {
+int dfu_set_config(struct usb_setup_packet *req, void *data) {
     struct dfu *dfu = data;
 
-    if (req->wValue == config_descriptor.interface_descriptor.bInterfaceNumber) {
+    if (req->wValue == usb_product_config_descriptor.dfu_interface.bInterfaceNumber) {
         dfu->enumeration_complete = 0x01;
     } else if (req->wValue == 0x0000) {
         dfu->enumeration_complete = 0x00;
@@ -432,7 +430,7 @@ int dfu_set_config(MXC_USB_SetupPkt *req, void *data) {
     return 0;
 }
 
-int dfu_set_interface(MXC_USB_SetupPkt *req, void *data) {
+int dfu_set_interface(struct usb_setup_packet *req, void *data) {
     return 0;
 }
 

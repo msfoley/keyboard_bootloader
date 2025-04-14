@@ -1,7 +1,5 @@
 #include <stdint.h>
 
-#include <gcr_regs.h>
-
 #include <device.h>
 #include <bootloader.h>
 #include <config.h>
@@ -51,11 +49,11 @@ void jump(uint32_t address) {
     NVIC->ICPR[6] = 0xFFFFFFFF;
     NVIC->ICPR[7] = 0xFFFFFFFF;
 
-    MXC_GCR->rst0 |= MXC_F_GCR_RST0_PERIPH | MXC_F_GCR_RST0_SOFT;
-
     SysTick->CTRL = 0;
     SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
     SCB->ICSR |= SCB_ICSR_PENDSVCLR_Msk;
+
+    jump_device(address);
 
     SCB->VTOR = address;
 

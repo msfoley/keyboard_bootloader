@@ -45,20 +45,22 @@ OBJDUMP := $(CROSS_COMPILE)-objdump
 VPATH += src
 VPATH += src/dfu
 VPATH += src/usb
+VPATH += device/$(TARGET_LC)/src
+VPATH += device/$(TARGET_LC)/src/usb
 VPATH += $(CMSIS_ROOT)/Device/Maxim/$(TARGET_UC)/Source
 VPATH := $(VPATH)
 SRCS := $(wildcard $(addsuffix /*.c, $(VPATH)))
 
 IPATH += .
 IPATH += include
-IPATH += include/$(TARGET_LC)
+IPATH += device/$(TARGET_LC)/include
 
 SRC_DIR ?= src
 BLD_DIR ?= build
 
 ENTRY := flash_reset_handler
-LINKERFILE := include/$(TARGET_LC)/linker.ld
-STARTUPFILE := src/startup.c
+LINKERFILE := device/$(TARGET_LC)/linker.ld
+STARTUPFILE := device/$(TARGET_LC)/src/startup.c
 
 LIB_BOARD := 0
 LIB_MAXUSB := 1
