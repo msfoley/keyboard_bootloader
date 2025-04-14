@@ -4,7 +4,15 @@
 #include <stdarg.h>
 
 #include <uart.h>
+
 #include <device.h>
+#include <util.h>
+
+char printf_buf[256];
+
+void util_uart_init() {
+    MXC_UART_Init(MXC_UART_GET_UART(UART_NUMBER), 115200);
+}
 
 void util_printf(const char *fmt, ...) {
     va_list args;

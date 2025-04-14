@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <usb.h>
-
+#include <usb/util.h>
 #include <util.h>
 #include <dfu/dfu.h>
 #include <dfu/download.h>
@@ -98,7 +97,7 @@ void dfu_download(void *cbdata) {
     }
 
     if (state->page_waiting_to_flush) {
-        boot_printf("Page %d complete - overflow %d\n", state->count / PAGE_SIZE, state->overflow_count);
+        util_printf("Page %d complete - overflow %d\n", state->count / PAGE_SIZE, state->overflow_count);
     }
 
     usb_util_ack(0);

@@ -1,11 +1,11 @@
 #include <stdint.h>
 
-#include <boot_usb/descriptors.h>
+#include <usb/descriptors.h>
 #include <config.h>
 
 __attribute__((aligned(4)))
 struct usb_device_descriptor usb_device_descriptor = {
-    .bLength = sizeof(device_descriptor),
+    .bLength = sizeof(usb_device_descriptor),
     .bDescriptorType = 0x01, // Device descriptor
     .bcdUSB = 0x0200,
     .bDeviceClass = 0x00,
@@ -15,18 +15,18 @@ struct usb_device_descriptor usb_device_descriptor = {
     .idVendor = USB_VENDOR_ID,
     .idProduct = USB_PRODUCT_ID,
     .bcdDevice = ((VERSION_MAJOR & 0xFF) << 8) | ((VERSION_MINOR) & 0xFF),
-    .iManufacturer = STRING_DESCRIPTOR_MANUFACTURER,
-    .iProduct = STRING_DESCRIPTOR_PRODUCT,
-    .iSerialNumber = STRING_DESCRIPTOR_SERIAL_ID,
+    .iManufacturer = USB_STRING_DESCRIPTOR_MANUFACTURER,
+    .iProduct = USB_STRING_DESCRIPTOR_PRODUCT,
+    .iSerialNumber = USB_STRING_DESCRIPTOR_SERIAL_ID,
     .bNumConfigurations = 0x01
 };
 
 __attribute__((aligned(4)))
 struct usb_product_config_descriptor usb_product_config_descriptor = {
     .config = {
-        .bLength = sizeof(config_descriptor.config_descriptor),
+        .bLength = sizeof(usb_product_config_descriptor.config),
         .bDescriptorType = 0x02, // Config descriptor type
-        .wTotalLength = sizeof(config_descriptor),
+        .wTotalLength = sizeof(usb_product_config_descriptor),
         .bNumInterfaces = 0x01,
         .bConfigurationValue = 0x01,
         .iConfiguration = 0x00,
@@ -34,7 +34,7 @@ struct usb_product_config_descriptor usb_product_config_descriptor = {
         .bMaxPower = 0xFA // 500 mA (2 mA / bit)
     },
     .dfu_interface = {
-        .bLength = sizeof(config_descriptor.interface_descriptor),
+        .bLength = sizeof(usb_product_config_descriptor.dfu_interface),
         .bDescriptorType = 0x04, // Interface descriptor type
         .bInterfaceNumber = 0x00,
         .bAlternateSetting = 0x00,
@@ -42,10 +42,10 @@ struct usb_product_config_descriptor usb_product_config_descriptor = {
         .bInterfaceClass = 0xFE, // DFU interface class
         .bInterfaceSubClass = 0x01,
         .bInterfaceProtocol = 0x02,
-        .iInterface = STRING_DESCRIPTOR_DFU_INTERFACE
+        .iInterface = USB_STRING_DESCRIPTOR_DFU_INTERFACE
     },
     .dfu_functional = {
-        .bLength = sizeof(config_descriptor.dfu_functional_descriptor),
+        .bLength = sizeof(usb_product_config_descriptor.dfu_functional),
         .bDescriptorType = 0x21,
         .bmAttributes = 0x0F,
         .wDetachTimeout = 60000, // Detach timeout 1s
@@ -127,4 +127,4 @@ struct usb_string_descriptor usb_string_descriptors[USB_STRING_DESCRIPTOR_LEN] =
     [USB_STRING_DESCRIPTOR_DFU_INTERFACE] = {
         .data = string_descriptor_dfu,
     },
-}
+};

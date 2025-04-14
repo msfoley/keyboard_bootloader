@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <util.h>
 #include <usb/usb.h>
@@ -24,7 +25,7 @@ int usb_init() {
     usb_register_descriptor(USB_DESCRIPTOR_DEVICE, (uint8_t *) &usb_device_descriptor, 0);
     usb_register_descriptor(USB_DESCRIPTOR_CONFIG, (uint8_t *) &usb_product_config_descriptor, 0);
     for (i = 0; i < USB_STRING_DESCRIPTOR_LEN; i++) {
-        usb_register_descriptor(USB_DESCRIPTOR_STRING, usb_string_descriptors[i], i);
+        usb_register_descriptor(USB_DESCRIPTOR_STRING, i, usb_string_descriptors[i].data);
     }
 
     usb.string_descriptor_index = i;
@@ -35,7 +36,7 @@ int usb_init() {
 int usb_register_callback(struct usb_callback *cb) {
     struct usb_callback *head;
 
-    if (cb == NULL || cb->event >= MAXUSB_NUM_EVENTS) {
+    if (cb == NULL || cb->event >= USB_EVENT_LEN) {
         return 1;
     }
 
@@ -60,18 +61,18 @@ int usb_register_callback(struct usb_callback *cb) {
 int usb_enum_register_callback(struct usb_enum_callback *cb) {
     struct usb_enum_callback *head;
 
-    if (cb == NULL || cb->event >= ENUM_NUM_CALLBACKS) {
+    if (cb == NULL || cb->request >= USB_ENUM_REQUEST_LEN) {
         return 1;
     }
 
-    if (usb.enum_callback_head[cb->event] == NULL) {
-        usb.enum_callback_head[cb->event] = cb;
+    if (usb.enum_callback_head[cb->request] == NULL) {
+        usb.enum_callback_head[cb->request] = cb;
         cb->next = NULL;
 
         return 0;
     }
 
-    head = usb.enum_callback_head[cb->event];
+    head = usb.enum_callback_head[cb->request];
     while (head->next) {
         head = head->next;
     }
@@ -96,7 +97,7 @@ int usb_register_string_descriptor(uint8_t **string_descriptor, uint8_t len) {
     }
 
     for (size_t i = 0; i < len; i++) {
-        usb_register_descriptor(USB_DESCRIPTOR_STRING, string_descriptor[i], usb.string_descriptor_index++);
+        usb_register_descriptor(USB_DESCRIPTOR_STRING, usb.string_descriptor_index++, string_descriptor[i]);
     }
 
     return index_start;

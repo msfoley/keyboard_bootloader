@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <usb/device.h>
 
-enum usb_request {
+enum usb_request_type {
     USB_REQUEST_PACKET,
     USB_REQUEST_TRANSFER,
     USB_REQUEST_LEN
@@ -17,9 +17,9 @@ struct usb_request {
     int status;
 
     void (*callback)(void *);
-    void *data;
+    void *cbdata;
 
-    enum usb_request type;
+    enum usb_request_type type;
     uint8_t device_data[USB_REQUEST_DEVICE_DATA_LEN];
 };
 

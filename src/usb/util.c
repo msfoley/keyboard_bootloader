@@ -6,8 +6,8 @@
 #include <enumerate.h>
 
 #include <util.h>
-#include <usb/util.h>
 #include <usb/usb.h>
+#include <usb/util.h>
 
 void usb_util_endpoint_callback(void *data) {
     struct usb_request *req = data;

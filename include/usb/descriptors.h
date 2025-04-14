@@ -1,7 +1,7 @@
 #ifndef USB_DESCRIPTORS_H
 #define USB_DESCRIPTORS_H
 
-enum usb_string_descriptor {
+enum usb_string_descriptor_type {
     USB_STRING_DESCRIPTOR_LANGUAGE_ID,
     USB_STRING_DESCRIPTOR_MANUFACTURER,
     USB_STRING_DESCRIPTOR_PRODUCT,
@@ -77,12 +77,12 @@ struct usb_string_descriptor {
 // endpoint, etc descriptors used in a product. Packed for the Maxim library, but other
 // products may need different layouts. Cross that bridge when we get to it.
 struct usb_product_config_descriptor {
-    struct usb_configuration_descriptor config;
+    struct usb_config_descriptor config;
     struct usb_interface_descriptor dfu_interface;
     struct usb_dfu_functional_descriptor dfu_functional;
 } __attribute__((packed));
 
-extern struct device_descriptor usb_device_descriptor;
+extern struct usb_device_descriptor usb_device_descriptor;
 extern struct usb_product_config_descriptor usb_product_config_descriptor;
 extern struct usb_string_descriptor usb_string_descriptors[USB_STRING_DESCRIPTOR_LEN];
 

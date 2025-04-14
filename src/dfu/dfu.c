@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <usb/usb.h>
-#include <usb/usb_util.h>
+#include <usb/util.h>
 #include <usb/descriptors.h>
 #include <dfu/dfu.h>
 
@@ -12,19 +12,19 @@ int dfu_state_machine(struct usb_setup_packet *req, void *data);
 int dfu_set_config(struct usb_setup_packet *req, void *data);
 int dfu_set_interface(struct usb_setup_packet *req, void *data);
 
-struct boot_usb_enum_callback dfu_class_req_callback = {
-    .request = USB_ENUM_REQUEST_CLASS_REQ,
+struct usb_enum_callback dfu_class_req_callback = {
+    .request = USB_ENUM_REQUEST_CLASS,
     .callback = dfu_state_machine,
     .data = &dfu_state
 };
 
-struct boot_usb_enum_callback dfu_set_config_callback = {
+struct usb_enum_callback dfu_set_config_callback = {
     .request = USB_ENUM_REQUEST_SET_CONFIG,
     .callback = dfu_set_config,
     .data = &dfu_state
 };
 
-struct boot_usb_enum_callback dfu_set_interface_callback = {
+struct usb_enum_callback dfu_set_interface_callback = {
     .request = USB_ENUM_REQUEST_SET_INTERFACE,
     .callback = dfu_set_interface,
     .data = &dfu_state
@@ -41,7 +41,7 @@ int read_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, 
     dfu->request.data = data;
     dfu->request.len = len;
     dfu->request.callback = callback;
-    dfu->request.data = dfu;
+    dfu->request.cbdata = dfu;
     dfu->request.type = USB_REQUEST_PACKET;
 
     return usb_util_read_endpoint(&dfu->request);
@@ -58,7 +58,7 @@ int write_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data,
     dfu->request.data = data;
     dfu->request.len = len;
     dfu->request.callback = callback;
-    dfu->request.data = dfu;
+    dfu->request.cbdata = dfu;
     dfu->request.type = USB_REQUEST_TRANSFER;
 
     return usb_util_write_endpoint(&dfu->request);
@@ -120,17 +120,17 @@ int dfu_init() {
     dfu_state.enumeration_complete = 0;
     dfu_state.dirty = 0;
 
-    int ret = boot_usb_enum_register_callback(&dfu_class_req_callback);
+    int ret = usb_register_enum_callback(&dfu_class_req_callback);
     if (ret) {
         return ret;
     }
 
-    ret = boot_usb_enum_register_callback(&dfu_set_config_callback);
+    ret = usb_register_enum_callback(&dfu_set_config_callback);
     if (ret) {
         return ret;
     }
 
-    ret = boot_usb_enum_register_callback(&dfu_set_interface_callback);
+    ret = usb_register_enum_callback(&dfu_set_interface_callback);
     if (ret) {
         return ret;
     }

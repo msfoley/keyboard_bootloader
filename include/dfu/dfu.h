@@ -1,7 +1,10 @@
 #ifndef DFU_DFU_H
 #define DFU_DFU_H
 
-#include <usb.h>
+#include <stdint.h>
+
+#include <usb/usb.h>
+#include <usb/util.h>
 #include <dfu/download.h>
 
 enum dfu_state {
@@ -66,7 +69,7 @@ struct dfu {
 
     uint16_t desc_index_status;
 
-    MXC_USB_Req_t request;
+    struct usb_request request;
     uint8_t control_data[64];
 
     int enumeration_complete;

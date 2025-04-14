@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <dfu/dfu.h>
-#include <boot_usb/usb.h>
+#include <usb/usb.h>
 #include <bootloader.h>
 #include <flash_control.h>
 #include <flash_layout.h>

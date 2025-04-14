@@ -3,11 +3,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-char printf_buf[256];
-
-void util_uart_init() {
-    MXC_UART_Init(MXC_UART_GET_UART(UART_NUMBER), 115200);
-}
+#include <util.h>
 
 static const uint8_t MultiplyDeBruijnBitPosition[32] = 
 {
