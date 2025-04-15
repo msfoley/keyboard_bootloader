@@ -1,98 +1,85 @@
 PROJECT := keyboard_bootloader
 
-TARGET ?= MAX32650
-TARGET_UC := $(shell echo $(TARGET) | tr '[:lower:]' '[:upper:]')
-TARGET_LC := $(shell echo $(TARGET) | tr '[:upper:]' '[:lower:]')
-export TARGET
-export TARGET_UC
-export TARGET_LC
+TARGET ?= max32650
 
-BOARD ?= keyboard
-
-ifeq ($(strip $(MAXIM_PATH)),)
-$(error MAXIM_PATH not defined.)
-endif
-
-LIBS_DIR := $(abspath $(MAXIM_PATH)/Libraries)
-CMSIS_ROOT := $(LIBS_DIR)/CMSIS
-export CMSIS_ROOT
-
-COMPILER := GCC
-ifneq ($(strip $(DEBUG)),)
-MXC_OPTIMIZE_CFLAGS += -O0
-PROJ_CFLAGS += -g -DDEBUG
-else
-MXC_OPTIMIZE_CFLAGS += -Os
-endif
-export MXC_OPTIMIZE_CFLAGS
-
-PATH := $(MAXIM_PATH)/Tools/GNUTools/10.3/bin:$(PATH)
-
-MFLOAT_ABI ?= softfp
-export MFLOAT_ABI
-
-PROJ_CFLAGS += -Wall
-PROJ_CFLAGS += -DMXC_ENABLE
-PROJ_CFLAGS += -DNO_EVAL_FEATURES
-PROJ_CFLAGS += -fdiagnostics-color=always
-
-CROSS_COMPILE ?= arm-none-eabi
-CC := $(CROSS_COMPILE)-gcc
-LD := $(CROSS_COMPILE)-ld
-OBJCOPY := $(CROSS_COMPILE)-objcopy
-OBJDUMP := $(CROSS_COMPILE)-objdump
-
-VPATH += src
-VPATH += src/dfu
-VPATH += src/usb
-VPATH += device/$(TARGET_LC)/src
-VPATH += device/$(TARGET_LC)/src/usb
-VPATH += $(CMSIS_ROOT)/Device/Maxim/$(TARGET_UC)/Source
-VPATH := $(VPATH)
-SRCS := $(wildcard $(addsuffix /*.c, $(VPATH)))
-
-IPATH += .
-IPATH += include
-IPATH += device/$(TARGET_LC)/include
-
-SRC_DIR ?= src
+SRC_DIR := src
 BLD_DIR ?= build
+LIB_DIR ?= lib
 
-ENTRY := flash_reset_handler
-LINKERFILE := device/$(TARGET_LC)/linker.ld
-STARTUPFILE := device/$(TARGET_LC)/src/startup.c
+TARGET_DIR := device/$(TARGET)
 
-LIB_BOARD := 0
-LIB_MAXUSB := 1
-include $(LIBS_DIR)/libs.mk
-include $(CMSIS_ROOT)/Device/Maxim/$(TARGET_UC)/Source/$(COMPILER)/$(TARGET_LC).mk
+C_SRCS := $(shell find $(SRC_DIR) -name "*.c")
+C_SRCS += $(shell find $(TARGET_DIR)/src -name "*.c")
+C_OBJS := $(patsubst %.c,$(BLD_DIR)/%.o,$(C_SRCS))
 
-ifeq ($(strip $(MAKECMDGOALS)),)
-MAKECMDGOALS := all
+S_SRCS := $(shell find $(SRC_DIR) -name "*.s")
+S_SRCS += $(shell find $(TARGET_DIR)/src -name "*.s")
+S_OBJS := $(patsubst %.s,$(BLD_DIR)/%.o,$(C_SRCS))
+
+SRCS := $(C_SRCS) $(S_SRCS)
+OBJS := $(C_OBJS) $(S_OBJS)
+
+IPATH += include
+IPATH += $(TARGET_DIR)/include
+
+include $(TARGET_DIR)/config.mk
+include defs.mk
+
+LIBS += -lc -lm -lnosys
+
+C_WARNINGS_AS_ERRORS ?= implicit-function-declaration
+
+ifneq ($(strip $(DEBUG)),)
+OPT_FLAG := -O0
+CFLAGS += -g -DDEBUG
+SUBMAKE_ARGS += DEBUG=1
 endif
+OPT_FLAG ?= -Os
 
-.PHONY: all clean libclean distclean
+COMMON_FLAGS ?=
 
-$(BLD_DIR)/$(PROJECT).dasm: FORCE
+CFLAGS += $(COMMON_FLAGS)
+CFLAGS += -Wall
+CFLAGS += -std=c11
+CFLAGS += $(OPT_FLAG)
+CFLAGS += -fdiagnostics-color=always
+CFLAGS += -Werror=$(C_WARNINGS_AS_ERRORS)
+CFLAGS += -MD
+CFLAGS += $(addprefix -I,$(IPATH))
 
-$(BLD_DIR)/$(PROJECT).bin: FORCE
+AFLAGS += $(COMMON_FLAGS)
+AFLAGS += -MD
+AFLAGS += $(addprefix -I,$(IPATH))
 
-$(BLD_DIR)/$(PROJECT).dfu: FORCE
+LDFLAGS += --entry $(ENTRY)
+LDFLAGS += $(addprefix -L,$(LIBPATH))
+LDFLAGS += -Map $(BLD_DIR)/$(PROJECT).map
+LDFLAGS += --print-memory-usage
 
-$(BLD_DIR)/$(PROJECT).dfu: $(BLD_DIR)/$(PROJECT).bin
-	cp $< $@
-	dfu-suffix -v 0xDEAD -p 0xBEEF --add $@
+SUBMAKE_ARGS += BLD_DIR=$(abspath $(LIB_DIR))
+SUBMAKE_ARGS += CC=$(CC) LD=$(LD) AR=$(AR) OBJCOPY=$(OBJCOPY) OBJDUMP=$(OBJDUMP)
+SUBMAKE_ARGS += OPT_FLAG=$(OPT_FLAG)
+SUBMAKE_ARGS += MFLOAT_ABI=$(MFLOAT_ABI) MFPU=$(MFPU)
 
-all: $(BLD_DIR)/$(PROJECT).dasm $(BLD_DIR)/$(PROJECT).dfu
-	arm-none-eabi-size --format=berkeley $(BUILD_DIR)/$(PROJECT).elf
+.PHONY: all clean lib libclean distclean
+
+include rules.mk
+
+all: $(BLD_DIR)/$(PROJECT).dfu $(BLD_DIR)/$(PROJECT).dasm
+
+lib: $(LIB_DEP)
+
+$(LIB_DEP):
+	$(MAKE) -C $(TARGET_DIR) $(SUBMAKE_ARGS)
+
+libclean:
+	$(RM) -r $(LIB_DIR)
 
 clean:
 	$(RM) -r $(BLD_DIR)
 
-libclean: 
-	$(MAKE) -f $(PERIPH_DRIVER_DIR)/periphdriver.mk clean.periph
-
 distclean: clean libclean
+$(BLD_DIR)/$(PROJECT).elf: $(OBJS) $(LIB_DEP)
 
 print-%:
 	@echo $* = $($*)
