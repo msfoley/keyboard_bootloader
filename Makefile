@@ -63,6 +63,7 @@ SUBMAKE_ARGS += OPT_FLAG=$(OPT_FLAG)
 SUBMAKE_ARGS += MFLOAT_ABI=$(MFLOAT_ABI) MFPU=$(MFPU)
 
 .PHONY: all clean lib libclean distclean
+.NOTINTERMEDIATE: $(BLD_DIR)/$(PROJECT).elf $(BLD_DIR)/$(PROJECT).bin
 
 all: $(BLD_DIR)/$(PROJECT).dfu $(BLD_DIR)/$(PROJECT).dasm
 
@@ -80,6 +81,7 @@ clean:
 	$(RM) -r $(BLD_DIR)
 
 distclean: clean libclean
+
 $(BLD_DIR)/$(PROJECT).elf: $(OBJS) $(LIB_DEP)
 
 print-%:

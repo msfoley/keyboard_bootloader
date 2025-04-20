@@ -13,7 +13,7 @@ $(BLD_DIR)/%.a: | $(BLD_DIR)
 	$(AR) -cr $@ $^
 
 $(BLD_DIR)/%.elf: | $(BLD_DIR)
-	$(LD) $(LDFLAGS) -O $@ $(filter %.o,$^) --start-group $(filter %.a,$^) $(LIBS) --end-group
+	$(LD) $(LDFLAGS) -o $@ $(filter %.o,$^) --start-group $(filter %.a,$^) $(LIBS) --end-group
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@

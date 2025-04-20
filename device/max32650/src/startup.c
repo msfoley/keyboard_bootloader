@@ -28,8 +28,8 @@
         while (1); \
     }
 
-extern uint32_t SystemCoreClock;
-extern uint8_t ChipRevision;
+uint32_t SystemCoreClock;
+uint8_t ChipRevision;
 
 extern uint32_t __stack_top;
 extern uint32_t __load_data;
@@ -304,6 +304,7 @@ void init_system() {
     __DSB();
     __ISB();
 
+    /* Change system clock source to the main high-speed clock */
     if (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_EN)) {
         MXC_GCR->clk_ctrl |= MXC_F_GCR_CLK_CTRL_HIRC96_EN;
 
@@ -312,8 +313,7 @@ void init_system() {
         MXC_GCR->clk_ctrl = (MXC_GCR->clk_ctrl & ~MXC_F_GCR_CLK_CTRL_SYSOSC_SEL) | MXC_S_GCR_CLK_CTRL_SYSOSC_SEL_HIRC96;
     }
 
-    /* Change system clock source to the main high-speed clock */
-    SystemCoreClockUpdate();
+    SystemCoreClock = (HIRC96_FREQ) >> ((MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_SYSCLK_PRESCALE) >> MXC_F_GCR_CLK_CTRL_SYSCLK_PRESCALE_POS);
 
     // Flush and enable instruction cache
     MXC_ICC->invalidate = 1;

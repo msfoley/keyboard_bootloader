@@ -85,7 +85,7 @@ int shutdown_callback() {
     return E_NO_ERROR;
 }
 
-int usb_start() {
+int usb_start_device() {
     NVIC_EnableIRQ(USB_IRQn);
 
     return 0;
@@ -128,7 +128,7 @@ int usb_init_device() {
     return 0;
 }
 
-int usb_register_descriptor(enum usb_descriptor_type type, uint8_t index, uint8_t *data) {
+int usb_register_descriptor(enum usb_descriptor_type type, uint8_t index, const uint8_t *data) {
     return enum_register_descriptor(device_descriptor_type_lookup[type], data, index);
 }
 

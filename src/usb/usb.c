@@ -58,7 +58,7 @@ int usb_register_callback(struct usb_callback *cb) {
     return 0;
 }
 
-int usb_enum_register_callback(struct usb_enum_callback *cb) {
+int usb_register_enum_callback(struct usb_enum_callback *cb) {
     struct usb_enum_callback *head;
 
     if (cb == NULL || cb->request >= USB_ENUM_REQUEST_LEN) {
@@ -83,7 +83,7 @@ int usb_enum_register_callback(struct usb_enum_callback *cb) {
     return 0;
 }
 
-int usb_register_string_descriptor(uint8_t **string_descriptor, uint8_t len) {
+int usb_register_string_descriptor(const uint8_t **string_descriptor, uint8_t len) {
     int index_start = usb.string_descriptor_index;
 
     if (!string_descriptor) {

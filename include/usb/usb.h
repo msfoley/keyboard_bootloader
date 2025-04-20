@@ -77,8 +77,8 @@ int usb_stop_device();
 int usb_register_callback(struct usb_callback *cb);
 int usb_register_enum_callback(struct usb_enum_callback *cb);
 
-int usb_register_string_descriptor(uint8_t **string_descriptor, uint8_t len);
+int usb_register_string_descriptor(const uint8_t **string_descriptor, uint8_t len);
 
-int usb_register_descriptor(enum usb_descriptor_type, uint8_t index, uint8_t *data);
+int usb_register_descriptor(enum usb_descriptor_type, uint8_t index, const uint8_t *data);
 
 #endif
