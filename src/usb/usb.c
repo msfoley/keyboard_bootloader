@@ -22,8 +22,8 @@ int usb_start() {
 int usb_init() {
     int i;
 
-    usb_register_descriptor(USB_DESCRIPTOR_DEVICE, (uint8_t *) &usb_device_descriptor, 0);
-    usb_register_descriptor(USB_DESCRIPTOR_CONFIG, (uint8_t *) &usb_product_config_descriptor, 0);
+    usb_register_descriptor(USB_DESCRIPTOR_DEVICE, 0, (uint8_t *) &usb_device_descriptor);
+    usb_register_descriptor(USB_DESCRIPTOR_CONFIG, 0, (uint8_t *) &usb_product_config_descriptor);
     for (i = 0; i < USB_STRING_DESCRIPTOR_LEN; i++) {
         usb_register_descriptor(USB_DESCRIPTOR_STRING, i, usb_string_descriptors[i].data);
     }

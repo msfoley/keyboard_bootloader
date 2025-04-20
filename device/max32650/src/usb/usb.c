@@ -104,7 +104,7 @@ int usb_init_device() {
     maxusb_cfg_options_t usb_opts;
 
     usb_opts.enable_hs = 1;
-    usb_opts.delay_us = us_delay;
+    usb_opts.delay_us = util_us_delay;
     usb_opts.init_callback = startup_callback;
     usb_opts.shutdown_callback = shutdown_callback;
 
@@ -129,9 +129,7 @@ int usb_init_device() {
 }
 
 int usb_register_descriptor(enum usb_descriptor_type type, uint8_t index, uint8_t *data) {
-    enum_descriptor_t device_type;
-
-    return enum_register_callback(device_descriptor_lookup[device_type], data, index);
+    return enum_register_descriptor(device_descriptor_type_lookup[type], data, index);
 }
 
 int usb_event_callback(maxusb_event_t event, void *data) {
@@ -176,11 +174,16 @@ int usb_event_callback(maxusb_event_t event, void *data) {
 
 int usb_enum_callback(MXC_USB_SetupPkt *setup_packet, void *data) {
     struct usb_enum_callback *head = *((struct usb_enum_callback **) data);
-    int ret = 0;
-    int err;
+    struct usb_setup_packet packet;
+
+    packet.bmRequestType = setup_packet->bmRequestType;
+    packet.bRequest = setup_packet->bRequest;
+    packet.wValue = setup_packet->wValue;
+    packet.wIndex = setup_packet->wIndex;
+    packet.wLength = setup_packet->wLength;
 
     while (head != NULL) {
-        head->callback(setup_packet, head->data);
+        head->callback(&packet, head->data);
 
         head = head->next;
     }

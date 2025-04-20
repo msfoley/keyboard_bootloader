@@ -40,7 +40,7 @@ COMMON_FLAGS ?=
 
 CFLAGS += $(COMMON_FLAGS)
 CFLAGS += -Wall
-CFLAGS += -std=c11
+CFLAGS += -std=gnu11
 CFLAGS += $(OPT_FLAG)
 CFLAGS += -fdiagnostics-color=always
 CFLAGS += -Werror=$(C_WARNINGS_AS_ERRORS)
@@ -51,6 +51,7 @@ AFLAGS += $(COMMON_FLAGS)
 AFLAGS += -MD
 AFLAGS += $(addprefix -I,$(IPATH))
 
+LDFLAGS += -T $(TARGET_DIR)/linker.ld
 LDFLAGS += --entry $(ENTRY)
 LDFLAGS += $(addprefix -L,$(LIBPATH))
 LDFLAGS += -Map $(BLD_DIR)/$(PROJECT).map
@@ -63,9 +64,9 @@ SUBMAKE_ARGS += MFLOAT_ABI=$(MFLOAT_ABI) MFPU=$(MFPU)
 
 .PHONY: all clean lib libclean distclean
 
-include rules.mk
-
 all: $(BLD_DIR)/$(PROJECT).dfu $(BLD_DIR)/$(PROJECT).dasm
+
+include rules.mk
 
 lib: $(LIB_DEP)
 

@@ -64,6 +64,9 @@ struct usb {
     uint8_t string_descriptor_index;
 };
 
+// Do not directly use outside of device specific USB code
+extern struct usb usb;
+
 int usb_init();
 int usb_init_device();
 int usb_start();

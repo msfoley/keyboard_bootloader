@@ -11,7 +11,7 @@
 
 void usb_util_endpoint_callback(void *data) {
     struct usb_request *req = data;
-    MXC_USB_Req_t *mxc_req = req->device_data;
+    MXC_USB_Req_t *mxc_req = (MXC_USB_Req_t *) req->device_data;
 
     req->len = mxc_req->actlen;
     req->status = mxc_req->error_code;
@@ -22,12 +22,12 @@ void usb_util_endpoint_callback(void *data) {
 }
 
 int usb_util_read_endpoint(struct usb_request *req) {
-    MXC_USB_Req_t *mxc_req = req->device_data;
+    MXC_USB_Req_t *mxc_req = (MXC_USB_Req_t *) req->device_data;
 
     mxc_req->ep = req->endpoint;
     mxc_req->data = req->data;
     mxc_req->reqlen = req->len;
-    mxc_req->callback = req->usb_util_endpoint_callback;
+    mxc_req->callback = usb_util_endpoint_callback;
     mxc_req->cbdata = req;
     mxc_req->type = req->type == USB_REQUEST_PACKET ? MAXUSB_TYPE_PKT : MAXUSB_TYPE_TRANS;
 
@@ -35,12 +35,12 @@ int usb_util_read_endpoint(struct usb_request *req) {
 }
 
 int usb_util_write_endpoint(struct usb_request *req) {
-    MXC_USB_Req_t *mxc_req = req->device_data;
+    MXC_USB_Req_t *mxc_req = (MXC_USB_Req_t *) req->device_data;
     
     mxc_req->ep = req->endpoint;
     mxc_req->data = req->data;
     mxc_req->reqlen = req->len;
-    mxc_req->callback = req->usb_util_endpoint_callback;
+    mxc_req->callback = usb_util_endpoint_callback;
     mxc_req->cbdata = req;
     mxc_req->type = req->type == USB_REQUEST_PACKET ? MAXUSB_TYPE_PKT : MAXUSB_TYPE_TRANS;
 
