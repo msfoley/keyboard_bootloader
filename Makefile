@@ -16,6 +16,8 @@ S_SRCS := $(shell find $(SRC_DIR) -name "*.s")
 S_SRCS += $(shell find $(TARGET_DIR)/src -name "*.s")
 S_OBJS := $(patsubst %.s,$(BLD_DIR)/%.o,$(C_SRCS))
 
+DEPS := $(patsubst %.o,%.d,$(C_OBJS))
+
 SRCS := $(C_SRCS) $(S_SRCS)
 OBJS := $(C_OBJS) $(S_OBJS)
 
@@ -31,7 +33,7 @@ C_WARNINGS_AS_ERRORS ?= implicit-function-declaration
 
 ifneq ($(strip $(DEBUG)),)
 OPT_FLAG := -O0
-CFLAGS += -g -DDEBUG
+CFLAGS += -DDEBUG
 SUBMAKE_ARGS += DEBUG=1
 endif
 OPT_FLAG ?= -Os
@@ -46,6 +48,7 @@ CFLAGS += -fdiagnostics-color=always
 CFLAGS += -Werror=$(C_WARNINGS_AS_ERRORS)
 CFLAGS += -MD
 CFLAGS += $(addprefix -I,$(IPATH))
+CFLAGS += -g
 
 AFLAGS += $(COMMON_FLAGS)
 AFLAGS += -MD
@@ -90,3 +93,5 @@ print-%:
 
 print-lib-%:
 	make -C $(TARGET_DIR) $(SUBMAKE_ARGS) print-$*
+
+-include $(DEPS)

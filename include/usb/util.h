@@ -20,7 +20,7 @@ struct usb_request {
     void *cbdata;
 
     enum usb_request_type type;
-    uint8_t device_data[USB_REQUEST_DEVICE_DATA_LEN];
+    __attribute__((aligned(4))) uint8_t device_data[USB_REQUEST_DEVICE_DATA_LEN];
 };
 
 int usb_util_read_endpoint(struct usb_request *req);
