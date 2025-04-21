@@ -17,7 +17,7 @@ void usb_util_endpoint_callback(void *data) {
     req->status = mxc_req->error_code;
 
     if (req->callback) {
-        req->callback(req->data);
+        req->callback(req->cbdata);
     }
 }
 

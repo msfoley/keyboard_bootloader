@@ -8,6 +8,8 @@ MFPU ?= fpv4-sp-d16
 
 COMMON_FLAGS += -mthumb
 COMMON_FLAGS += -mcpu=cortex-m4
+COMMON_FLAGS += -mfloat-abi=$(MFLOAT_ABI)
+COMMON_FLAGS += -mfpu=$(MFPU)
 
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Wa,-mimplicit-it=thumb
@@ -18,7 +20,7 @@ CFLAGS += -DTARGET=$(TARGET)
 CFLAGS += -D$(TARGET_UC)
 CFLAGS += -DTARGET_REV=0x4131
 
-LDFLAGS += --gc-sections
+LDFLAGS += -Wl,--gc-sections
 
 ENTRY := flash_reset_handler
 
@@ -40,11 +42,3 @@ IPATH += $(MAXIM_PATH)/Libraries/CMSIS/Device/Maxim/MAX32650/Include
 IPATH += $(MAXIM_PATH)/Libraries/CMSIS/Include
 
 LIB_DEP := $(LIB_DIR)/libPeriphDriver.a $(LIB_DIR)/maxusb.a
-
-MAXIM_GCC_PATH := $(MAXIM_PATH)/Tools/GNUTools/10.3
-LIBPATH += $(MAXIM_GCC_PATH)/lib/gcc/$(CROSS_COMPILE)/10.3.1
-LIBPATH += $(MAXIM_GCC_PATH)/lib/gcc
-LIBPATH += $(MAXIM_GCC_PATH)/$(CROSS_COMPILE)/lib/$(CROSS_COMPILE)/10.3.1
-LIBPATH += $(MAXIM_GCC_PATH)/$(CROSS_COMPILE)/lib
-LIBPATH += $(MAXIM_GCC_PATH)/$(CROSS_COMPILE)/usr/lib/$(CROSS_COMPILE)/10.3.1
-LIBPATH += $(MAXIM_GCC_PATH)/$(CROSS_COMPILE)/usr/lib

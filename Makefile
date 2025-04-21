@@ -53,9 +53,10 @@ AFLAGS += $(addprefix -I,$(IPATH))
 
 LDFLAGS += -T $(TARGET_DIR)/linker.ld
 LDFLAGS += --entry $(ENTRY)
+LDFLAGS += $(COMMON_FLAGS)
 LDFLAGS += $(addprefix -L,$(LIBPATH))
-LDFLAGS += -Map $(BLD_DIR)/$(PROJECT).map
-LDFLAGS += --print-memory-usage
+LDFLAGS += -Wl,-Map,$(BLD_DIR)/$(PROJECT).map
+LDFLAGS += -Wl,--print-memory-usage
 
 SUBMAKE_ARGS += BLD_DIR=$(abspath $(LIB_DIR))
 SUBMAKE_ARGS += CC=$(CC) LD=$(LD) AR=$(AR) OBJCOPY=$(OBJCOPY) OBJDUMP=$(OBJDUMP)
@@ -86,3 +87,6 @@ $(BLD_DIR)/$(PROJECT).elf: $(OBJS) $(LIB_DEP)
 
 print-%:
 	@echo $* = $($*)
+
+print-lib-%:
+	make -C $(TARGET_DIR) $(SUBMAKE_ARGS) print-$*

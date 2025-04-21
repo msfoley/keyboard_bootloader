@@ -20,17 +20,22 @@ int usb_start() {
 }
 
 int usb_init() {
-    int i;
+    int ret = 0;
 
-    usb_register_descriptor(USB_DESCRIPTOR_DEVICE, 0, (uint8_t *) &usb_device_descriptor);
-    usb_register_descriptor(USB_DESCRIPTOR_CONFIG, 0, (uint8_t *) &usb_product_config_descriptor);
-    for (i = 0; i < USB_STRING_DESCRIPTOR_LEN; i++) {
-        usb_register_descriptor(USB_DESCRIPTOR_STRING, i, usb_string_descriptors[i].data);
+    ret = usb_init_device();
+    if (!ret) {
+        int i;
+
+        usb_register_descriptor(USB_DESCRIPTOR_DEVICE, 0, (uint8_t *) &usb_device_descriptor);
+        usb_register_descriptor(USB_DESCRIPTOR_CONFIG, 0, (uint8_t *) &usb_product_config_descriptor);
+        for (i = 0; i < USB_STRING_DESCRIPTOR_LEN; i++) {
+            usb_register_descriptor(USB_DESCRIPTOR_STRING, i, usb_string_descriptors[i].data);
+        }
+
+        usb.string_descriptor_index = i;
     }
 
-    usb.string_descriptor_index = i;
-
-    return usb_init_device();
+    return ret;
 }
 
 int usb_register_callback(struct usb_callback *cb) {

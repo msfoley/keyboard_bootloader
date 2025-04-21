@@ -48,6 +48,11 @@ extern int main();
 
 void init_system();
 
+__attribute__((aligned(512)))
+void (* __ram_vector[MXC_IRQ_COUNT])(void);
+
+void (* __isr_vector[MXC_IRQ_COUNT])(void);
+
 __attribute__((naked, noreturn, section(".flash_isr")))
 void flash_reset_handler() {
     uint32_t i;
@@ -60,9 +65,6 @@ void flash_reset_handler() {
            ldr r0, =__stack_top\n\
            msr msp, r0\n\
     ");
-
-    /* Workaround: Write to SCON register on power up to fix trim issue for SRAM */
-    MXC_GCR->scon = (MXC_GCR->scon & ~(MXC_F_GCR_SCON_OVR)) | (MXC_S_GCR_SCON_OVR_1V1);
 
     src = &__load_data;
     dst = &_data;
@@ -77,14 +79,19 @@ void flash_reset_handler() {
         dst[i] = 0x00000000;
     }
 
-    NVIC_SetRAM();
+    src = (uint32_t *) __isr_vector;
+    dst = (uint32_t *) __ram_vector;
+    len = MXC_IRQ_COUNT;
+    for (i = 0; i < len; i++) {
+        dst[i] = src[i];
+    }
 
-    dst = (uint32_t *) SCB->VTOR;
     dst[NonMaskableInt_IRQn + 16] = (uint32_t) nmi_handler;
     dst[HardFault_IRQn + 16] = (uint32_t) hard_fault_handler;
     dst[MemoryManagement_IRQn + 16] = (uint32_t) mem_manage_handler;
     dst[BusFault_IRQn + 16] = (uint32_t) bus_fault_handler;
     dst[UsageFault_IRQn + 16] = (uint32_t) usage_fault_handler;
+    SCB->VTOR = (uint32_t) dst;
 
     init_system();
     main();
@@ -292,6 +299,9 @@ void (* __isr_vector[MXC_IRQ_COUNT])(void) = {
 };
 
 void init_system() {
+    /* Workaround: Write to SCON register on power up to fix trim issue for SRAM */
+    MXC_GCR->scon = (MXC_GCR->scon & ~(MXC_F_GCR_SCON_OVR)) | (MXC_S_GCR_SCON_OVR_1V1);
+
     ChipRevision = MXC_SYS_GetRev();
     
     /* MAX3265x ROM turns off interrupts, which is not the same as the reset state. */
@@ -305,13 +315,9 @@ void init_system() {
     __ISB();
 
     /* Change system clock source to the main high-speed clock */
-    if (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_EN)) {
-        MXC_GCR->clk_ctrl |= MXC_F_GCR_CLK_CTRL_HIRC96_EN;
-
-        while (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_RDY));
-
-        MXC_GCR->clk_ctrl = (MXC_GCR->clk_ctrl & ~MXC_F_GCR_CLK_CTRL_SYSOSC_SEL) | MXC_S_GCR_CLK_CTRL_SYSOSC_SEL_HIRC96;
-    }
+    MXC_GCR->clk_ctrl |= MXC_F_GCR_CLK_CTRL_HIRC96_EN;
+    while (!(MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_HIRC96_RDY));
+    MXC_GCR->clk_ctrl = (MXC_GCR->clk_ctrl & ~MXC_F_GCR_CLK_CTRL_SYSOSC_SEL) | MXC_S_GCR_CLK_CTRL_SYSOSC_SEL_HIRC96;
 
     SystemCoreClock = (HIRC96_FREQ) >> ((MXC_GCR->clk_ctrl & MXC_F_GCR_CLK_CTRL_SYSCLK_PRESCALE) >> MXC_F_GCR_CLK_CTRL_SYSCLK_PRESCALE_POS);
 
