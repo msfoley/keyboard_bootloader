@@ -8,7 +8,7 @@
 #include <dfu/dfu.h>
 #include <device.h>
 #include <flash_control.h>
-#include <flash_layout.h>
+#include <memory_layout.h>
 #include <util.h>
 
 int flash_control_init() {

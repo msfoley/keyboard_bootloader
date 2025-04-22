@@ -5,6 +5,6 @@
 
 #include <max32650.h>
 
-#include <flash_layout.h>
+#include <memory_layout.h>
 
 #endif

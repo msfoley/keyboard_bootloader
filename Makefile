@@ -54,7 +54,7 @@ AFLAGS += $(COMMON_FLAGS)
 AFLAGS += -MD
 AFLAGS += $(addprefix -I,$(IPATH))
 
-LDFLAGS += -T $(TARGET_DIR)/linker.ld
+LDFLAGS += -T $(BLD_DIR)/linker.ld
 LDFLAGS += --entry $(ENTRY)
 LDFLAGS += $(COMMON_FLAGS)
 LDFLAGS += $(addprefix -L,$(LIBPATH))
@@ -86,8 +86,6 @@ clean:
 
 distclean: clean libclean
 
-$(BLD_DIR)/$(PROJECT).elf: $(OBJS) $(LIB_DEP)
-
 print-%:
 	@echo $* = $($*)
 
@@ -95,3 +93,4 @@ print-lib-%:
 	make -C $(TARGET_DIR) $(SUBMAKE_ARGS) print-$*
 
 -include $(DEPS)
+-include $(BLD_DIR)/linker.d

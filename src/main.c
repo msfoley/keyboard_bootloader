@@ -5,7 +5,7 @@
 #include <usb/usb.h>
 #include <bootloader.h>
 #include <flash_control.h>
-#include <flash_layout.h>
+#include <memory_layout.h>
 #include <util.h>
 
 int main() {

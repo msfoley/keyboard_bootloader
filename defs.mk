@@ -3,3 +3,4 @@ LD := $(CROSS_COMPILE)-ld
 AR := $(CROSS_COMPILE)-ar
 OBJCOPY := $(CROSS_COMPILE)-objcopy
 OBJDUMP := $(CROSS_COMPILE)-objdump
+CPP := $(CROSS_COMPILE)-cpp

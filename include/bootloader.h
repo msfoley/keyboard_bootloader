@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <device.h>
 
-#include <flash_layout.h>
+#include <memory_layout.h>
 
 extern uint32_t __bootloader_info;
 extern uint32_t _text;
