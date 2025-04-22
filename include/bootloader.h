@@ -35,6 +35,7 @@ extern const struct bootloader_info bootloader_info;
 
 #define BOOTLOADER_INFO_OFFSET (((uint32_t) &__bootloader_info) - ((uint32_t) &_text))
 
+uint32_t calculate_image_crc32(uint32_t address);
 void jump(uint32_t address);
 void jump_device(uint32_t address);
 

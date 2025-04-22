@@ -12,6 +12,8 @@ SECTIONS {
         __bootloader_info = ALIGN(., 4);
         KEEP(*(.bootloader_info))
         KEEP(*(.flash_isr))
+        *(.init*)
+        *(.fini*)
         _etext = .;
     } > BOOT
     __text_len = _etext - _text;

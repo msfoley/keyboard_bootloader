@@ -42,8 +42,6 @@ int dfu_download_check_done(struct dfu *dfu) {
         return DFU_STATUS_ERROR_TARGET;
     }
 
-    // Checksum
-
     return DFU_STATUS_OK;
 }
 

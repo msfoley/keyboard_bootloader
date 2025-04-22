@@ -162,3 +162,19 @@ void util_us_delay(unsigned int us) {
 
     while (delay_cnt--);
 }
+
+#define UTIL_CRC32_POLY 0xEDB88320
+
+uint32_t util_crc32(uint32_t crc, uint8_t *buf, uint32_t len) {
+    crc = ~crc;
+
+    for (int i = 0; i < len; i++) {
+        crc ^= buf[i];
+
+        for (int j = 0; j < 8; j++) {
+            crc = (crc >> 1) ^ (UTIL_CRC32_POLY & (0 - (crc & 1)));
+        }
+    }
+
+    return ~crc;
+}

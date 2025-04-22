@@ -14,6 +14,7 @@ $(BLD_DIR)/%.a: | $(BLD_DIR)
 
 $(BLD_DIR)/%.elf: | $(BLD_DIR)
 	$(CC) $(LDFLAGS) -o $@ $(filter %.o,$^) -Wl,--start-group $(filter %.a,$^) $(LIBS) -Wl,--end-group
+	./insert_checksum.sh $@
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@

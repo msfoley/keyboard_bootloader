@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <stddef.h>
 
 #define container_of(pointer, type, member) \
     (type *)((char *) (pointer) - (char *) &((type *) 0)->member)
@@ -16,5 +17,7 @@ int util_log10(uint32_t v);
 
 void util_us_delay(unsigned int us);
 uint32_t util_get_core_freq();
+
+uint32_t util_crc32(uint32_t crc, uint8_t *buf, uint32_t len);
 
 #endif
