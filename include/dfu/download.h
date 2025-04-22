@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <usb.h>
-
 #include <bootloader.h>
 
 struct dfu_download {

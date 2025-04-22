@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
 
 #include <usb/usb.h>
 #include <usb/util.h>
@@ -30,9 +31,9 @@ struct usb_enum_callback dfu_set_interface_callback = {
     .data = &dfu_state
 };
 
-int read_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len) {
+int dfu_read_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len) {
     if (!dfu || !data) {
-        return E_INVALID;
+        return EINVAL;
     }
 
     memset(&dfu->request, 0, sizeof(dfu->request));
@@ -47,9 +48,9 @@ int read_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, 
     return usb_util_read_endpoint(&dfu->request);
 }
 
-int write_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len) {
+int dfu_write_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len) {
     if (!dfu || !data) {
-        return E_INVALID;
+        return EINVAL;
     }
 
     memset(&dfu->request, 0, sizeof(dfu->request));
@@ -80,7 +81,7 @@ int dfu_send_status(struct dfu *dfu, uint32_t poll_timeout) {
     struct dfu_status_response *status;
 
     if (!dfu) {
-        return E_INVALID;
+        return EINVAL;
     }
 
     status = (struct dfu_status_response *) dfu->control_data;
@@ -96,21 +97,21 @@ int dfu_send_status(struct dfu *dfu, uint32_t poll_timeout) {
     status->state = dfu->state;
     status->string = 0;
 
-    return write_control_data(dfu_send_state_status_callback, dfu, dfu->control_data, sizeof(*status));
+    return dfu_write_control_data(dfu_send_state_status_callback, dfu, dfu->control_data, sizeof(*status));
 }
 
 int dfu_send_state(struct dfu *dfu) {
     struct dfu_state_response *state;
 
     if (!dfu) {
-        return E_INVALID;
+        return EINVAL;
     }
 
     state = (struct dfu_state_response *) dfu->control_data;
 
     state->state = dfu->state;
 
-    return write_control_data(dfu_send_state_status_callback, dfu, dfu->control_data, sizeof(state));
+    return dfu_write_control_data(dfu_send_state_status_callback, dfu, dfu->control_data, sizeof(state));
 }
 
 int dfu_init() {
@@ -149,7 +150,7 @@ int dfu_state_idle(struct usb_setup_packet *req, struct dfu *dfu) {
                 dfu->state = DFU_STATE_DOWNLOAD_SYNC;
                 dfu->status = DFU_STATUS_OK;
 
-                return read_control_data(dfu_download, dfu, dfu->control_data, req->wLength);
+                return dfu_read_control_data(dfu_download, dfu, dfu->control_data, req->wLength);
             } else {
                 dfu->state = DFU_STATE_ERROR;
                 dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
@@ -159,9 +160,15 @@ int dfu_state_idle(struct usb_setup_packet *req, struct dfu *dfu) {
         case DFU_REQUEST_UPLOAD:
             if (req->wLength > 0) {
                 // Handle outgoing data
-                dfu->state = DFU_STATE_UPLOAD_IDLE;
-                dfu->status = DFU_STATUS_OK;
-                usb_util_ack(0);
+                ret = dfu_upload_start(dfu, req);
+                if (!ret) {
+                    dfu->state = DFU_STATE_UPLOAD_IDLE;
+                    dfu->status = DFU_STATUS_OK;
+                } else {
+                    dfu->state = DFU_STATE_ERROR;
+                    dfu->status = ret;
+                    usb_util_stall(0);
+                }
             } else {
                 dfu->state = DFU_STATE_ERROR;
                 dfu->status = DFU_STATUS_ERROR_STALLED_PACKET;
@@ -244,7 +251,7 @@ int dfu_state_download_idle(struct usb_setup_packet *req, struct dfu *dfu) {
         case DFU_REQUEST_DOWNLOAD:
             if (req->wLength > 0) {
                 // Handle incoming data
-                read_control_data(dfu_download, dfu, dfu->control_data, req->wLength);
+                dfu_read_control_data(dfu_download, dfu, dfu->control_data, req->wLength);
 
                 dfu->state = DFU_STATE_DOWNLOAD_SYNC;
                 dfu->status = DFU_STATUS_OK;
@@ -329,13 +336,16 @@ int dfu_state_upload_idle(struct usb_setup_packet *req, struct dfu *dfu) {
         case DFU_REQUEST_UPLOAD:
             if (req->wLength > 0) {
                 // Handle outgoing data
-                if (0 /* If outgoing data < wLength, end upload */) {
-                    dfu->state = DFU_STATE_IDLE;
+                ret = dfu_upload(dfu, req);
+                if (!ret) {
+                    dfu->state = DFU_STATE_UPLOAD_IDLE;
                     dfu->status = DFU_STATUS_OK;
+                } else {
+                    dfu->state = DFU_STATE_ERROR;
+                    dfu->status = ret;
+                    usb_util_stall(0);
                 }
             }
-
-            usb_util_ack(0);
             break;
         case DFU_REQUEST_ABORT:
             dfu->state = DFU_STATE_IDLE;

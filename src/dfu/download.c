@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <usb.h>
 #include <usb/util.h>
 #include <util.h>
 #include <dfu/dfu.h>

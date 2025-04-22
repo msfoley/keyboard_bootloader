@@ -17,6 +17,7 @@ __attribute__((packed))
 struct bootloader_shared {
     uint32_t magic;
     uint32_t flags;
+    uint8_t reserved[8];
 };
 
 __attribute__((packed))
@@ -28,6 +29,7 @@ struct bootloader_info {
     uint32_t start_address;
     uint32_t length;
     uint32_t checksum;
+    uint8_t reserved2[12];
 };
 
 extern struct bootloader_shared bootloader_shared;

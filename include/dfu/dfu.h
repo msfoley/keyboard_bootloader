@@ -6,6 +6,7 @@
 #include <usb/usb.h>
 #include <usb/util.h>
 #include <dfu/download.h>
+#include <dfu/upload.h>
 
 enum dfu_state {
     DFU_STATE_APP_IDLE,
@@ -66,6 +67,7 @@ struct dfu {
     enum dfu_vendor_error verr;
 
     struct dfu_download download;
+    struct dfu_upload upload;
 
     uint16_t desc_index_status;
 
@@ -86,6 +88,9 @@ struct dfu_status_response {
 struct dfu_state_response {
     uint8_t state;
 } __attribute__((packed));
+
+int dfu_read_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len);
+int dfu_write_control_data(void (*callback)(void *), struct dfu *dfu, uint8_t *data, uint16_t len);
 
 int dfu_init();
 int dfu_poll_state();
